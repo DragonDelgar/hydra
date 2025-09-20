@@ -27,5 +27,6 @@ Hungry for more info? Check out [the wiki](https://github.com/DragonDelgar/hydra
 
 ## Acknowledgements
 - Boddy, Beud, and Nick (BongOfDestiny) for active beta testing
+- Boddy for reference footage / images shown in the Hydra Wiki
 - Drummer's Monthly for being an awesome CH drums community, and for testing some of the first paths ever made by Hydra
 - Smidge for all the love and support
