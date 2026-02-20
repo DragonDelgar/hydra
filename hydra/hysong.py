@@ -1,3 +1,4 @@
+import io
 import mido
 import re
 import hashlib
@@ -405,11 +406,20 @@ class MidiParser:
         self._msg_buffer = []
     
     def parsefile(self, filename, m_difficulty, m_pro, m_bass2x):
+        with open(filename, 'rb') as file:
+            self.parse(file, m_difficulty, m_pro, m_bass2x)
+    
+    def parsebytes(self, chartbytes, m_difficulty, m_pro, m_bass2x):
+        print("Midi parsebytes :>")
+        file = io.BytesIO(chartbytes)
+        self.parse(file, m_difficulty, m_pro, m_bass2x)
+    
+    def parse(self, file, m_difficulty, m_pro, m_bass2x):
         """After calling this, self.song will reflect the input filename.
         Must be .mid.
         """
         # Load from MIDI
-        mid = mido.MidiFile(filename, clip=True)
+        mid = mido.MidiFile(file=file, clip=True)
         
         # Parser settings
         self.mode_difficulty = m_difficulty
@@ -567,7 +577,7 @@ class ChartParser:
         self._fill_start_tick = None
         self._fill_end_tick = None
     
-    def load_sections(self, charttxt):
+    def load_sections(self, file):
         """Loads the chartfile's sections from text form so they can be 
         accessed easily.
         
@@ -575,7 +585,8 @@ class ChartParser:
         """
         wip_section = None
         open_block = False
-        for line in charttxt:
+        for line_bytes in file:
+            line = line_bytes.decode('utf-8').strip()
             if wip_section:
                 if line.rstrip() == "{":
                     # Start a block
@@ -798,14 +809,22 @@ class ChartParser:
                         op(*op_args)
                     except hymisc.ChartFileError:
                         pass
-        
+    
     def parsefile(self, filename, m_difficulty, m_pro, m_bass2x):
+        with open(filename, mode='rb') as file:
+            self.parse(file, m_difficulty, m_pro, m_bass2x)
+    
+    def parsebytes(self, chartbytes, m_difficulty, m_pro, m_bass2x):
+        print("Chart parsebytes :>")
+        file = io.BytesIO(chartbytes)
+        self.parse(file, m_difficulty, m_pro, m_bass2x)
+    
+    def parse(self, file, m_difficulty, m_pro, m_bass2x):
         """After this function, self.song will be ready.
         Must be .chart.
         """
         # Load from txt
-        with open(filename, mode='r') as charttxt:
-            self.load_sections(charttxt)
+        self.load_sections(file)
         
         # Parser settings
         self.mode_difficulty = m_difficulty

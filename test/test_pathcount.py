@@ -13,7 +13,7 @@ class TestPathCount(unittest.TestCase):
     
     def _test_pathcount(self, chartname, depth, pathcount):
         chartpath = self.chartfolder + os.sep + chartname
-        r = hyutil.analyze_chart(
+        r = hyutil.analyze_chart_file(
             chartpath,
             'expert', True, True,
             'scores', depth

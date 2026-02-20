@@ -13,7 +13,7 @@ class TestSolo(unittest.TestCase):
     
     def _test_solo(self, chartname, s_solo):
         chartpath = self.chartfolder + os.sep + chartname
-        path = hyutil.analyze_chart(
+        path = hyutil.analyze_chart_file(
             chartpath,
             'expert', True, True,
             'scores', 4

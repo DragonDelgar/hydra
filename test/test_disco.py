@@ -13,7 +13,7 @@ class TestDisco(unittest.TestCase):
     
     def _test_totalscore(self, chartname, score):
         chartpath = self.chartfolder + os.sep + chartname
-        record = hyutil.analyze_chart(
+        record = hyutil.analyze_chart_file(
             chartpath,
             'expert', True, True,
             'scores', 4

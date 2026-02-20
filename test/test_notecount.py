@@ -13,7 +13,7 @@ class TestNoteCount(unittest.TestCase):
     
     def _test_notecount(self, chartname, notecount):
         chartpath = self.chartfolder + os.sep + chartname
-        path = hyutil.analyze_chart(
+        path = hyutil.analyze_chart_file(
             chartpath,
             'expert', True, True,
             'scores', 4

@@ -591,7 +591,7 @@ def on_run_chart(sender, app_data, user_data):
     # run chart
     try:
         chartfile = hyutil.get_folder_chart(appstate.selected_song_row[4])
-        record, tempomap = hyutil.analyze_chart(
+        record, tempomap = hyutil.analyze_chart_file(
             chartfile,
             appstate.usettings.view_difficulty, appstate.usettings.view_prodrums, appstate.usettings.view_bass2x,
             appstate.usettings.depth_mode, int(appstate.usettings.depth_value),

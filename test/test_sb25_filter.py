@@ -32,7 +32,7 @@ class TestSB25Filter(unittest.TestCase):
     
     def _test_filter(self, chartname):
         
-        full_record = hyutil.analyze_chart(
+        full_record = hyutil.analyze_chart_file(
             self.chartfolder + os.sep + chartname,
             'expert', True, True,
             'scores', 500,
@@ -43,7 +43,7 @@ class TestSB25Filter(unittest.TestCase):
             with self.subTest(i=i):
                 filter_depth = 5
                 
-                filter_record = hyutil.analyze_chart(
+                filter_record = hyutil.analyze_chart_file(
                     self.chartfolder + os.sep + chartname,
                     'expert', True, True,
                     'scores', filter_depth,

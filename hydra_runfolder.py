@@ -42,7 +42,7 @@ if __name__ == "__main__":
                 'records': {},
             }
         
-        record = hyutil.analyze_chart(
+        record = hyutil.analyze_chart_file(
             chartfile, 
             'Expert', True, True,
             'scores', 0,

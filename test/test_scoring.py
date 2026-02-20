@@ -23,7 +23,7 @@ class TestScoring(unittest.TestCase):
         s_base, s_combo, s_sp, s_solo, s_accents, s_ghosts, s_total
     ):
         chartpath = self.chartfolder + os.sep + chartname
-        path = hyutil.analyze_chart(
+        path = hyutil.analyze_chart_file(
             chartpath,
             'expert', True, True,
             'scores', 4

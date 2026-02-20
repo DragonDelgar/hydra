@@ -121,7 +121,7 @@ def get_rowvalues(chartfile, inifile, path, subfolders):
 
     return (hyhash, name, artist, charter, path, subfolders)
 
-def analyze_chart(
+def analyze_chart_file(
     filepath,
     m_difficulty, m_pro, m_bass2x,
     d_mode, d_value,
@@ -129,11 +129,7 @@ def analyze_chart(
     cb_parsecomplete=None, cb_pathsprogress=None,
     export_tempomap=False
 ):
-    """The full process to go from chart file to hydata.
-    
-    It's more or less a chain: Chart --> Song --> Graph --> Record.
-    
-    """
+    """Entry point for analyzing a chart from a file."""
     # Parse chart file and make a song object
     if filepath.endswith(".mid"):
         parser = hysong.MidiParser()
@@ -146,9 +142,52 @@ def analyze_chart(
     
     if cb_parsecomplete:
         cb_parsecomplete()
+        
+    return _analyze(parser.song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
+
+
+def analyze_chart_bytes_mid(
+    chartbytes,
+    m_difficulty, m_pro, m_bass2x,
+    d_mode, d_value,
+    ms_filter=None,
+    cb_parsecomplete=None, cb_pathsprogress=None,
+    export_tempomap=False
+):
+    """Entry point for analyzing a chart from bytes known to come from .mid."""
+    parser = hysong.MidiParser()
+    parser.parsebytes(chartbytes, m_difficulty, m_pro, m_bass2x)
+    return _analyze(parser.song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
+
+def analyze_chart_bytes_chart(
+    chartbytes,
+    m_difficulty, m_pro, m_bass2x,
+    d_mode, d_value,
+    ms_filter=None,
+    cb_parsecomplete=None, cb_pathsprogress=None,
+    export_tempomap=False
+):
+    """Entry point for analyzing a chart from bytes known to come from .chart."""
+    parser = hysong.ChartParser()
+    parser.parsebytes(chartbytes, m_difficulty, m_pro, m_bass2x)
+    return _analyze(parser.song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
     
+def _analyze(
+    song,
+    m_difficulty, m_pro, m_bass2x,
+    d_mode, d_value,
+    ms_filter=None,
+    cb_pathsprogress=None,
+    export_tempomap=False
+):
+    """Uses hydra to produce a pathing result for one song with the given settings.
+    
+    Use analyze_chart_bytes_mid, analyze_chart_bytes_chart, or analyze_chart_file
+    to get the song input for this function.
+    
+    """
     # Use song object to make a score graph
-    graph = hypath.ScoreGraph(parser.song)
+    graph = hypath.ScoreGraph(song)
     
     # Use score graph to run the paths
     pather = hypath.GraphPather()
@@ -156,9 +195,9 @@ def analyze_chart(
     
     if export_tempomap:
         tempo_map = {
-            'res': parser.song.tick_resolution,
-            'tpm': {t: v for t,v in parser.song.tpm_changes.items()},
-            'bpm': {t: v for t,v in parser.song.bpm_changes.items()}
+            'res': song.tick_resolution,
+            'tpm': {t: v for t,v in song.tpm_changes.items()},
+            'bpm': {t: v for t,v in song.bpm_changes.items()}
         }
         return (pather.record, tempo_map)
 

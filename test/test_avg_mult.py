@@ -13,7 +13,7 @@ class TestAverageMultiplier(unittest.TestCase):
     
     def _test_avg_mult(self, chartname, avgmult):
         chartpath = self.chartfolder + os.sep + chartname
-        path = hyutil.analyze_chart(
+        path = hyutil.analyze_chart_file(
             chartpath,
             'expert', True, True,
             'scores', 4

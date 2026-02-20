@@ -20,7 +20,7 @@ class TestActMisalign(unittest.TestCase):
     
     def _test_activation_note(self, chartname, has_green):
         chartpath = self.chartfolder + os.sep + chartname
-        record = hyutil.analyze_chart(
+        record = hyutil.analyze_chart_file(
             chartpath,
             'expert', True, True,
             'scores', 4

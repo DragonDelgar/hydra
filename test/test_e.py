@@ -12,7 +12,7 @@ class TestE(unittest.TestCase):
         self.chartfolder = os.sep.join(["..","test","input","test_e"])
     
     def best_path(self, chartname):
-        return hyutil.analyze_chart(
+        return hyutil.analyze_chart_file(
             self.chartfolder + os.sep + chartname,
             'expert', True, True,
             'scores', 4
