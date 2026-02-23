@@ -347,6 +347,26 @@ class Path:
             return ' '.join((str(a.notationstr()) for a in self.all_activations()))
         else:
             return "(No activations.)"
+            
+    def pathstring_verbose(self):
+        sections = []
+        
+        # Mult squeezes
+        if self.multsqueezes:
+            sections.append(", ".join([f"{multsq.multiplier}x" for multsq in self.multsqueezes]))
+        else:
+            sections.append("(No mult squeezes.)")
+        
+        # Activations
+        if self.has_activations():
+            sections.append(' '.join([a.notationstr_verbose() for a in self.all_activations()]))
+        else:
+            sections.append("(No activations.)")
+            
+        # Score
+        sections.append(f"Score: {self.totalscore():,}")
+        
+        return " | ".join(sections)
 
     def avg_mult(self):
         multscore = self.totalscore() - self.score_solo
@@ -432,6 +452,10 @@ class Activation:
     def notationstr(self):
         e = 'E' if self.is_e_critical() else ''
         return f"{e}{self.skips}{''.join(sq.symbol for sq in self.sqinouts)}"
+        
+    def notationstr_verbose(self):
+        ms = f" ({int(self.difficulty())} ms)" if self.difficulty() is not None else ""
+        return f"{self.notationstr()}{ms}"
     
     def is_e_critical(self):
         return self.e_offset < 70

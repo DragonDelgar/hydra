@@ -443,7 +443,7 @@ def on_path_selected(sender, app_data, path):
         dpg.configure_item(appstate.current_path_selectable, enabled=True)
     
     appstate.current_path_selectable = sender
-    appstate.current_path_copytext = f"{path.pathstring()} (Score: {path.totalscore():,})"
+    appstate.current_path_copytext = path.pathstring_verbose()
     
     # "Lock" the new selected path: only deselectable by selecting another.
     dpg.configure_item(sender, enabled=False)
