@@ -454,9 +454,16 @@ class Activation:
         return f"{e}{self.skips}{''.join(sq.symbol for sq in self.sqinouts)}"
         
     def notationstr_verbose(self):
-        ms = f" ({int(self.difficulty())} ms)" if self.difficulty() is not None else ""
-        return f"{self.notationstr()}{ms}"
-    
+        timings = []
+        if self.is_e_critical():
+            timings.append(f"{int(self.e_difficulty(verbose=True))} ms")
+        timings += [f"{int(sq.difficulty)} ms" for sq in self.sqinouts]
+        
+        if not timings:
+            return self.notationstr()
+        
+        return f"{self.notationstr()} ({'/'.join(timings)})"
+        
     def is_e_critical(self):
         return self.e_offset < 70
         
@@ -480,8 +487,8 @@ class Activation:
         
         return c
 
-    def e_difficulty(self):
-        if self.is_E0():
+    def e_difficulty(self, verbose=False):
+        if self.is_E0() or verbose:
             return -self.e_offset + 0.0
         return None
         
