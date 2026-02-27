@@ -721,20 +721,36 @@ class GraphPath:
         if is_sq_out:
             new_path.data._activations[-1].sqinouts.append(hydata.SqOut(self.currentnode.branch_edge.sqinout_timing))
         
-        # Backend scoring adjustments
+        # Backend scoring adjustments.
         for be in self.currentnode.branch_edge.backends:
-            if be.offset_ms > 0 and be.offset_ms < 3:
-                new_path.data.score_sp += be.points
-                
+            is_already_counted = be.offset_ms <= 0
+            is_leeway = be.offset_ms > 0 and be.offset_ms < 3
+            
             if is_sq_out:
-                # Undo SP scoring for backends that were already scored but are now squeezed out of SP
-                if be.timecode >= self.currentnode.branch_edge.sqinout_time and be.timecode <= new_path.currentnode.timecode:
-                    new_path.data.score_sp -= be.points
+                is_before_sqout = be.timecode < self.currentnode.branch_edge.sqinout_time
+                is_exact_sqout = be.timecode == self.currentnode.branch_edge.sqinout_time
+                is_after_sqout = be.timecode > self.currentnode.branch_edge.sqinout_time
                 
-                # And add back in sqout points (lol) if this is the exact sqout chord
-                if be.timecode == self.currentnode.branch_edge.sqinout_time and be.timecode <= new_path.currentnode.timecode:
-                    new_path.data.score_sp += be.sqout_points
-                    
+                if is_already_counted:
+                    if is_exact_sqout:
+                        # Replace already-counted SP points with reduced sqout points.
+                        new_path.data.score_sp += -be.points + be.sqout_points
+                    elif is_after_sqout:
+                        # Remove aready-counted SP points, since in this path
+                        # this backend was forced out of SP even though it's early.
+                        new_path.data.score_sp += -be.points
+                elif is_leeway:
+                    if is_before_sqout:
+                        # Leeway squeeze (counted even though it's late).
+                        new_path.data.score_sp += be.points
+                    elif is_exact_sqout:
+                        # Leeway squeeze, but with the reduced sqout points.
+                        new_path.data.score_sp += be.sqout_points
+            else:
+                if is_leeway:
+                    # Leeway squeeze (counted even though it's late)
+                    new_path.data.score_sp += be.points
+        
         return new_path
         
     def branch_deactivate(self):
