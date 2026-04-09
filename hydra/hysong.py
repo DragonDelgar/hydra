@@ -2,6 +2,7 @@ import io
 import mido
 import re
 import hashlib
+import struct
 
 from . import hydata
 from . import hymisc
@@ -143,6 +144,82 @@ class Song:
 
     def start_time(self):
         return hymisc.Timecode(0, self.tick_resolution, self.tpm_changes, self.bpm_changes)
+
+
+"""
+
+Song loading
+
+"""
+
+def load_songpath_mid(songpath, m_difficulty, m_pro, m_bass2x):
+    """Inputs a .mid filepath, outputs a Song object."""
+    return MidiParser().parsefile(songpath, m_difficulty, m_pro, m_bass2x)
+    
+def load_songpath_chart(songpath, m_difficulty, m_pro, m_bass2x):
+    """Inputs a .chart filepath, outputs a Song object."""
+    return ChartParser().parsefile(songpath, m_difficulty, m_pro, m_bass2x)
+    
+def load_songpath_sng(songpath, m_difficulty, m_pro, m_bass2x):
+    """Inputs a .sng filepath, outputs a Song object.
+    
+    Does not validate the SNG file.
+    
+    Will select an encoded chart from the SNG in this order (if present):
+    1. notes.mid
+    2. notes.chart
+    
+    """
+    with open(songpath, mode='rb') as bytes:
+        # SNG header
+        XORMASK_OFFSET = 10
+        bytes.seek(XORMASK_OFFSET, 0)
+        xormask = bytes.read(16)
+        
+        # SNG metadata (skip)
+        metadata_len = struct.unpack('Q', bytes.read(8))[0]
+        bytes.read(metadata_len)
+            
+        # File metadata
+        bytes.read(8) # Skip section length (using file count instead)
+        file_count = struct.unpack('Q', bytes.read(8))[0]
+        
+        chartfile_loader = None
+        
+        for i in range(file_count):
+            filename_len = struct.unpack('B', bytes.read(1))[0]
+            filename = bytes.read(filename_len).decode('utf-8').casefold()
+            contents_len = struct.unpack('Q', bytes.read(8))[0]
+            contents_index = struct.unpack('Q', bytes.read(8))[0]
+
+            if filename == "notes.mid":
+                chartfile_loader = load_songbytes_mid
+                chartfile_len, chartfile_offset = contents_len, contents_index
+                break
+            elif filename == "notes.chart":
+                chartfile_loader = load_songbytes_chart
+                chartfile_len, chartfile_offset = contents_len, contents_index
+        
+        if chartfile_loader is None:
+            raise Exception("No chart files found in SNG file.")
+
+        # Jump to the found chart data and undo the mask
+        bytes.seek(chartfile_offset, 0)
+        
+        notebytes = bytearray(chartfile_len)
+        for i in range(chartfile_len):
+            xorkey = xormask[i % 16] ^ (i & 0xff)
+            notebytes[i] = bytes.read(1)[0] ^ xorkey
+        
+        return chartfile_loader(notebytes, m_difficulty, m_pro, m_bass2x)
+
+def load_songbytes_mid(songbytes, m_difficulty, m_pro, m_bass2x):
+    """Inputs a .mid byte stream, outputs a Song object."""
+    return MidiParser().parsebytes(songbytes, m_difficulty, m_pro, m_bass2x)
+    
+def load_songbytes_chart(songbytes, m_difficulty, m_pro, m_bass2x):
+    """Inputs a .chart byte stream, outputs a Song object."""
+    return ChartParser().parsebytes(songbytes, m_difficulty, m_pro, m_bass2x)
 
 
 class MidiParser:
@@ -407,19 +484,18 @@ class MidiParser:
     
     def parsefile(self, filename, m_difficulty, m_pro, m_bass2x):
         with open(filename, 'rb') as file:
-            self.parse(file, m_difficulty, m_pro, m_bass2x)
+            return self.parse(file, m_difficulty, m_pro, m_bass2x)
     
     def parsebytes(self, chartbytes, m_difficulty, m_pro, m_bass2x):
-        print("Midi parsebytes :>")
         file = io.BytesIO(chartbytes)
-        self.parse(file, m_difficulty, m_pro, m_bass2x)
+        return self.parse(file, m_difficulty, m_pro, m_bass2x)
     
-    def parse(self, file, m_difficulty, m_pro, m_bass2x):
+    def parse(self, midibytes, m_difficulty, m_pro, m_bass2x):
         """After calling this, self.song will reflect the input filename.
         Must be .mid.
         """
         # Load from MIDI
-        mid = mido.MidiFile(file=file, clip=True)
+        mid = mido.MidiFile(file=midibytes, clip=True)
         
         # Parser settings
         self.mode_difficulty = m_difficulty
@@ -464,6 +540,8 @@ class MidiParser:
                 break
         
         self.song.check_activations()
+        
+        return self.song
 
 
 class ChartSection:
@@ -812,12 +890,11 @@ class ChartParser:
     
     def parsefile(self, filename, m_difficulty, m_pro, m_bass2x):
         with open(filename, mode='rb') as file:
-            self.parse(file, m_difficulty, m_pro, m_bass2x)
+            return self.parse(file, m_difficulty, m_pro, m_bass2x)
     
     def parsebytes(self, chartbytes, m_difficulty, m_pro, m_bass2x):
-        print("Chart parsebytes :>")
         file = io.BytesIO(chartbytes)
-        self.parse(file, m_difficulty, m_pro, m_bass2x)
+        return self.parse(file, m_difficulty, m_pro, m_bass2x)
     
     def parse(self, file, m_difficulty, m_pro, m_bass2x):
         """After this function, self.song will be ready.
@@ -851,3 +928,6 @@ class ChartParser:
                 self.push_timestamp(tick, tick_entries)
         
         self.song.check_activations()
+        
+        return self.song
+

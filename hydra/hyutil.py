@@ -129,21 +129,26 @@ def analyze_chart_file(
     cb_parsecomplete=None, cb_pathsprogress=None,
     export_tempomap=False
 ):
-    """Entry point for analyzing a chart from a file."""
-    # Parse chart file and make a song object
-    if filepath.endswith(".mid"):
-        parser = hysong.MidiParser()
-    elif filepath.endswith(".chart"):
-        parser = hysong.ChartParser()
+    """Entry point for analyzing a chart file.
+    
+    Accepts .mid, .chart, and .sng.
+    
+    """
+    if filepath.casefold().endswith(".mid"):
+        load_songpath = hysong.load_songpath_mid
+    elif filepath.casefold().endswith(".chart"):
+        load_songpath = hysong.load_songpath_chart
+    elif filepath.casefold().endswith(".sng"):
+        load_songpath = hysong.load_songpath_sng
     else:
         raise hymisc.ChartFileError(f"Unexpected chart filetype: {filepath}")
     
-    parser.parsefile(filepath, m_difficulty, m_pro, m_bass2x)
+    song = load_songpath(filepath, m_difficulty, m_pro, m_bass2x)
     
     if cb_parsecomplete:
         cb_parsecomplete()
         
-    return _analyze(parser.song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
+    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
 
 
 def analyze_chart_bytes_mid(
@@ -154,10 +159,18 @@ def analyze_chart_bytes_mid(
     cb_parsecomplete=None, cb_pathsprogress=None,
     export_tempomap=False
 ):
-    """Entry point for analyzing a chart from bytes known to come from .mid."""
-    parser = hysong.MidiParser()
-    parser.parsebytes(chartbytes, m_difficulty, m_pro, m_bass2x)
-    return _analyze(parser.song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
+    """Entry point for analyzing a chart from the bytes of a .mid file.
+    
+    Use this with an SNG that has already been decoded for its .mid file.
+    Otherwise, use analyze_chart_file.
+    
+    """
+    song = hysong.load_songbytes_mid(chartbytes, m_difficulty, m_pro, m_bass2x)
+    
+    if cb_parsecomplete:
+        cb_parsecomplete()
+    
+    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
 
 def analyze_chart_bytes_chart(
     chartbytes,
@@ -167,10 +180,18 @@ def analyze_chart_bytes_chart(
     cb_parsecomplete=None, cb_pathsprogress=None,
     export_tempomap=False
 ):
-    """Entry point for analyzing a chart from bytes known to come from .chart."""
-    parser = hysong.ChartParser()
-    parser.parsebytes(chartbytes, m_difficulty, m_pro, m_bass2x)
-    return _analyze(parser.song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
+    """Entry point for analyzing a chart from the bytes of a .chart file.
+    
+    Use this with an SNG that has already been decoded for its .chart file.
+    Otherwise, use analyze_chart_file.
+    
+    """
+    song = hysong.load_songbytes_chart(chartbytes, m_difficulty, m_pro, m_bass2x)
+    
+    if cb_parsecomplete:
+        cb_parsecomplete()
+    
+    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
     
 def _analyze(
     song,
