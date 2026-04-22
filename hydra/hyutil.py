@@ -5,12 +5,137 @@ import configparser
 import pathlib
 import hashlib
 import time
+import struct
+from dataclasses import dataclass
 
 from . import hypath
 from . import hydata
 from . import hysong
 from . import hymisc
 
+@dataclass
+class ScanItem:
+    notespath: str
+    rootfolder: str
+    title: str
+    artist: str
+    charter: str
+    
+    def __repr__(self):
+        return f"ScanItem{vars(self)}"
+    
+    def from_mid_ini(f_mid, f_ini):
+        
+    
+    def from_chart_ini(f_chart, f_ini):
+        
+    
+    def from_sng(f_sng):
+        with open(f_sng, mode='rb') as bytes:
+            
+            item = ScanItem(f_sng, None, None, None, None)
+            
+            METADATACOUNT_OFFSET = 34
+            bytes.seek(METADATACOUNT_OFFSET, 0)
+            metadata_count = struct.unpack('Q', bytes.read(8))[0]
+            
+            for i in range(metadata_count):
+                key_len = struct.unpack('I', bytes.read(4))[0]
+                key = bytes.read(key_len).decode('utf-8').casefold()
+                value_len = struct.unpack('I', bytes.read(4))[0]
+                value = bytes.read(value_len).decode('utf-8')
+                
+                match key:
+                    case 'name':
+                        item.title = value
+                    case 'artist':
+                        item.artist = value
+                    case 'charter':
+                        item.charter = value
+           
+            return item
+    
+def discover_charts_new(rootfolders, cb_progress=None):
+    """Recursively searches for charts in the given root folders.
+    
+    Re-encountered folders will be skipped.
+    
+    Procedure:
+    - At each folder visited, check files present.
+    - Add "notes.mid" if "song.ini" is present.
+    - If there was no "notes.mid", add "notes.chart" if "song.ini" is present.
+    - Add all .sng files.
+    
+    """
+    scanitems = []
+    errors = []
+    
+    def process_folder(folder):
+        print(f"Processing {folder}...")
+        
+        found_mid = None
+        found_chart = None
+        found_ini = None
+        found_sngs = []
+        fullpaths = (os.path.join(folder, f) for f in os.listdir(folder))
+        for file in (os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(f)):
+            # gather up files by type
+            if file == "notes.mid":
+                found_mid = os.path.join(folder, f)
+            elif file == "notes.chart":
+                found_chart = os.path.join(folder, f)
+            elif file == "song.ini":
+                found_ini = os.path.join(folder, f)
+            elif file.casefold().endswith(".sng"):
+                found_sngs.append(os.path.join(folder, f))
+        
+        if found_mid and found_ini:
+            # Add .mid
+            print(f".mid found: {found_mid}/{found_ini}")
+            mid_item = ScanItem.from_mid_ini(found_mid, found_ini)
+            mid_item.rootfolder = folder
+            scanitems.append(mid_item)
+            if cb_progress:
+                cb_progress(len(scanitems))
+        elif found_chart and found_ini:
+            # Add .chart
+            print(f".chart found: {found_chart}/{found_ini}")
+            chart_item = ScanItem.from_chart_ini(found_chart, found_ini)
+            chart_item.rootfolder = folder
+            scanitems.append(chart_item)
+            if cb_progress:
+                cb_progress(len(scanitems))
+        
+        # Add .sng
+        for f_sng in found_sngs:
+            print(f"SNG found: {f_sng}")
+            sng_item = ScanItem.from_sng(f_sng)
+            sng_item.rootfolder = folder
+            scanitems.append(sng_item)
+            if cb_progress:
+                cb_progress(len(scanitems))
+    
+    # DFS
+    unexplored = [(root, root) for root in rootfolders if os.path.isdir(root)]
+    visited = set(rootfolders)
+    
+    while unexplored:
+        dir, origin = unexplored.pop()
+        
+        #try:
+        process_folder(dir)
+            
+        subpaths = [os.path.join(dir, f) for f in os.listdir(dir)]
+        for subpath in (os.path.join(dir, f) for f in os.listdir(dir)):
+            if os.path.isdir(subpath) and subpath not in visited:
+                visited.add(subpath)
+                unexplored.append((subpath, origin))
+            
+        # except Exception as e:
+            # errors.append(e)
+            # continue
+    
+    return (scanitems, errors)
     
 def discover_charts(rootfolders, cb_progress=None):
     """Returns a list of tuples (chartfile, inifile, chartfolder, subfolders)
