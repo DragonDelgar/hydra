@@ -28,38 +28,35 @@ def scan_library():
     errors = []
     
     # Map out the file locations first
-    chartfiles, folder_errors = hyutil.discover_charts(
+    scanitems, folder_errors = hyutil.discover_charts(
         appstate.usettings.chartfolders,
         on_scan_findprogress
     )
     errors += folder_errors
-    on_scan_findcomplete(len(chartfiles))
+    on_scan_findcomplete(len(scanitems))
     
     cxn = sqlite3.connect(hymisc.DBPATH)
     cur = cxn.cursor()
     
     # Initialize db
-    chartrow = ','.join(hymisc.TABLE_COL_INFO.keys())
     cur.execute("DROP TABLE IF EXISTS charts")
-    cur.execute(f"CREATE TABLE charts({chartrow})")
+    cur.execute(f"CREATE TABLE charts({hyutil.ScanItem.db_cols()})")
     
-    # Copy info from each ini to the db
-    for i, info in enumerate(chartfiles):
+    # 'md5,name,artist,charter,path,folder'
+    for i, scanitem in enumerate(scanitems):
         try:
-            # Insert into db
-            rowvalues = hyutil.get_rowvalues(*info)
             cur.execute(
                 f"INSERT INTO charts VALUES (?, ?, ?, ?, ?, ?)",
-                rowvalues
+                scanitem.db_values()
             )
         except Exception as e:
             errors.append(str(e))
-        on_scan_db_progress(i+1, len(chartfiles))
+        on_scan_db_progress(i+1, len(scanitems))
         
     cxn.commit()
     cxn.close()
     
-    return len(chartfiles), errors
+    return len(scanitems), errors
     
 
 """Settings"""
@@ -227,24 +224,25 @@ class HyAppRecordBook:
                                 made_timecodes[bsq.timecode] = new_tc
                             bsq.timecode = made_timecodes[bsq.timecode]
     
-    def add_song(self, hyhash, name, artist, charter, tempomap):
-        """Add an entry for the given hash.
+    def add_song(self, scanitem, tempomap):
+        """Add an entry for the given scanned song.
         
-        Multiple song library folders can have the same hyhash
-        and therefore which metadata is added with the hyhash can depend on
-        which gets processed first, but realistically if the hyhash is the same
-        then title/artist/charter will be the same. Anyway, they're just
-        reference values in case you're searching through the json manually.
+        Essentially just adds a key (the md5) and tempomap
+        for records to be added under.
+        
+        Duplicate md5s with different metadata are possible, but
+        these metadata values are just for reference to put readable info next
+        to md5s in the json.
         
         """
-        if hyhash in self.book:
+        if scanitem.md5 in self.book:
             return
         
-        self.book[hyhash] = {
+        self.book[scanitem.md5] = {
             # Some metadata for convenience if digging through the json
-            'ref_name': name,
-            'ref_artist': artist,
-            'ref_charter': charter,
+            'ref_name': scanitem.title,
+            'ref_artist': scanitem.artist,
+            'ref_charter': scanitem.charter,
             
             'tempomap': tempomap,
             
@@ -287,7 +285,7 @@ class HyAppState:
         self.current_path_selectable = None
         self.current_path_copytext = None
         
-        self.selected_song_row = None
+        self.selected_scanitem = None
     
         self.scanmodal_height_short = 190
         self.scanmodal_height_long = 320
@@ -305,7 +303,7 @@ class HyAppState:
             return None
             
     def get_selected_record(self):
-        return self.get_record(self.selected_song_row[0], self.usettings.chartmode_key())
+        return self.get_record(self.selected_scanitem.md5, self.usettings.chartmode_key())
         
 """UI callbacks"""
 
@@ -427,7 +425,7 @@ def on_library_rowclick(sender, app_data, user_data):
         return
         
     # Update selected row and update UI
-    appstate.selected_song_row = user_data
+    appstate.selected_scanitem = user_data
     view_showsongdetails()
 
 def on_path_selected(sender, app_data, path):
@@ -590,7 +588,7 @@ def on_run_chart(sender, app_data, user_data):
     reset_analyze_modal()
     # run chart
     try:
-        chartfile = hyutil.get_folder_chart(appstate.selected_song_row[4])
+        chartfile = appstate.selected_scanitem.notespath
         record, tempomap = hyutil.analyze_chart_file(
             chartfile,
             appstate.usettings.view_difficulty, appstate.usettings.view_prodrums, appstate.usettings.view_bass2x,
@@ -611,8 +609,8 @@ def on_run_chart(sender, app_data, user_data):
     dpg.set_value("analyze_opt_bar", 1)
     dpg.show_item("analyze_opt_done")
     
-    appstate.hydatabook.add_song(appstate.selected_song_row[0], appstate.selected_song_row[1], appstate.selected_song_row[2], appstate.selected_song_row[3], tempomap)
-    appstate.hydatabook.add_record(appstate.selected_song_row[0], appstate.usettings.chartmode_key(), record)
+    appstate.hydatabook.add_song(appstate.selected_scanitem, tempomap)
+    appstate.hydatabook.add_record(appstate.selected_scanitem.md5, appstate.usettings.chartmode_key(), record)
 
     time.sleep(0.5)
     on_analyze_dismiss(None, None)
@@ -770,57 +768,50 @@ def refresh_tableview():
             searchparam = f"%{appstate.search}%"
             where = "WHERE name LIKE ? OR artist LIKE ?"
             fullcount = cur.execute(f"SELECT COUNT(*) FROM charts {where}", (searchparam, searchparam)).fetchone()[0]
-            entries = cur.execute(f"SELECT * FROM charts {where} ORDER BY name LIMIT {appstate.TABLE_ROWCOUNT} OFFSET {appstate.table_viewpage * appstate.TABLE_ROWCOUNT}", (searchparam,searchparam)).fetchall()
+            page_db_rows = cur.execute(f"SELECT * FROM charts {where} ORDER BY name LIMIT {appstate.TABLE_ROWCOUNT} OFFSET {appstate.table_viewpage * appstate.TABLE_ROWCOUNT}", (searchparam,searchparam)).fetchall()
         else:
             fullcount = appstate.librarysize
-            entries = cur.execute(f"SELECT * FROM charts ORDER BY name LIMIT {appstate.TABLE_ROWCOUNT} OFFSET {appstate.table_viewpage * appstate.TABLE_ROWCOUNT}").fetchall()
+            page_db_rows = cur.execute(f"SELECT * FROM charts ORDER BY name LIMIT {appstate.TABLE_ROWCOUNT} OFFSET {appstate.table_viewpage * appstate.TABLE_ROWCOUNT}").fetchall()
         cxn.close()
     except sqlite3.OperationalError:
-        entries = []
+        page_db_rows = []
         cxn.close()
-            
-    # subset of db columns shown on the table
-    colkeys = ['name', 'artist', 'charter', 'folder']
-            
-    # Assign library-based header names
-    for i, s in enumerate([hymisc.TABLE_COL_INFO[k][1] for k in colkeys]):
-        dpg.configure_item(f"table_header{i}", label=s)    
     
-    # Assign record-based header name
-    dpg.configure_item(f"table_header{appstate.TABLE_COLCOUNT - 1}", label="Path")
+    scan_items = []
+    for row in page_db_rows:
+        try:
+            scan_items.append(hyutil.ScanItem.from_db(row))
+        except hyutil.SongScanException as e:
+            # This has opportunity to be a UI error during the initial scan
+            pass
     
     for r in range(appstate.TABLE_ROWCOUNT):
-        # Fill library-based cells
-        for c, colkey in enumerate(colkeys):
-            try:
-                dpg.set_value(f"table[{r}, {c}]", entries[r][hymisc.TABLE_COL_INFO[colkey][0]])
-                dpg.bind_item_font(f"table[{r}, {c}]", "MainFont")
-            except IndexError:
-                dpg.set_value(f"table[{r}, {c}]", "-----")
-                dpg.bind_item_font(f"table[{r}, {c}]", "MonoFont")
-                
-        # Fill record-based cell
         try:
-            record = appstate.get_record(entries[r][0], appstate.usettings.chartmode_key())
+            scan_item = scan_items[r]
+            dpg.set_value(f"table[{r}, {0}]", scan_item.title)
+            dpg.set_value(f"table[{r}, {1}]", scan_item.artist)
+            dpg.set_value(f"table[{r}, {2}]", scan_item.charter)
+            dpg.set_value(f"table[{r}, {3}]", scan_item.rootfolder)
+            
+            record = appstate.get_record(scan_item.md5, appstate.usettings.chartmode_key())
             if record:
                 if record.is_version_compatible():
-                    dpg.configure_item(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", label=record.best_path().pathstring(), user_data=entries[r])
+                    dpg.configure_item(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", label=record.best_path().pathstring(), user_data=scan_item)
                     dpg.bind_item_theme(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", "bestpath_theme")
-                    dpg.bind_item_font(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", "MonoFont")
                 else:
-                    dpg.configure_item(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", label="(Update...)", user_data=entries[r])
+                    dpg.configure_item(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", label="(Update...)", user_data=scan_item)
                     dpg.bind_item_theme(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", "warning_theme")
-                    dpg.bind_item_font(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", "MonoFont")
             else:
-                dpg.configure_item(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", label="(New...)", user_data=entries[r])
+                dpg.configure_item(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", label="(New...)", user_data=scan_item)
                 dpg.bind_item_theme(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", "newsong_theme")
-                dpg.bind_item_font(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", "MainFont")
         except IndexError:
+            # The page data doesn't use all rows and this is a trailing empty row
+            for i in range(appstate.TABLE_COLCOUNT - 1):
+                dpg.set_value(f"table[{r}, {i}]", "-----")
             dpg.configure_item(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", label="-----", user_data=None)
             dpg.bind_item_theme(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", "newsong_theme")
-            dpg.bind_item_font(f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", "MonoFont")
     
-    lastpage = fullcount//appstate.TABLE_ROWCOUNT
+    lastpage = fullcount // appstate.TABLE_ROWCOUNT
     dpg.set_value("librarypagelabel", f"{appstate.table_viewpage + 1}/{lastpage + 1}")
         
     dpg.configure_item("pageleftbutton", enabled=appstate.table_viewpage > 0)
@@ -841,18 +832,17 @@ def refresh_librarytitle():
     dpg.configure_item("librarytitle", label=f"Library {countstr}")
     
 def refresh_songdetails():
-    dpg.set_value("songdetails_songtitle", appstate.selected_song_row[1])
-    dpg.set_value("songdetails_songartist", appstate.selected_song_row[2])
-    dpg.set_value("songdetails_songcharter", appstate.selected_song_row[3])
-    dpg.set_value("songdetails_songhash", appstate.selected_song_row[0])
+    dpg.set_value("songdetails_songtitle", appstate.selected_scanitem.title)
+    dpg.set_value("songdetails_songartist", appstate.selected_scanitem.artist)
+    dpg.set_value("songdetails_songcharter", appstate.selected_scanitem.charter)
+    dpg.set_value("songdetails_songhash", appstate.selected_scanitem.md5)
     
     dpg.configure_item("songdetails", label=f"Song Details\t\t\t\t{appstate.usettings.chartmode_key()}")
         
     viewed_record = appstate.get_selected_record()
     
-    # Enable / Disable analyze button (everything else can work off of
-    # saved data, but analysis requires the chart to be here immediately)
-    if hyutil.get_folder_chart(appstate.selected_song_row[4]):
+    # Check the file that was scanned in the past
+    if os.path.isfile(appstate.selected_scanitem.notespath):
         dpg.configure_item("runbutton", enabled=True, label="Analyze paths!")
     else:
         dpg.configure_item("runbutton", enabled=False, label="Song file not found.\nTry scanning again.")
@@ -1057,15 +1047,15 @@ def build_main_ui():
                     with dpg.table_row(tag=f"table_row{r}"):
                         for c in range(appstate.TABLE_COLCOUNT - 1):
                             dpg.add_text(f"table[{r}, {c}]", tag=f"table[{r}, {c}]")
-                            
+                            dpg.bind_item_font(dpg.last_item(), "MainFont")
                         dpg.add_selectable(tag=f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", label=f"table[{r}, {appstate.TABLE_COLCOUNT - 1}]", span_columns=True, callback=on_library_rowclick)
-                        
+                        dpg.bind_item_font(dpg.last_item(), "MonoFont")
                             
-            dpg.configure_item("table_header0", init_width_or_weight=1)
-            dpg.configure_item("table_header1", init_width_or_weight=.75)
-            dpg.configure_item("table_header2", init_width_or_weight=.5)
-            dpg.configure_item("table_header3", init_width_or_weight=.75)                
-            dpg.configure_item("table_header4", init_width_or_weight=1)
+            dpg.configure_item("table_header0", label="Title", init_width_or_weight=1)
+            dpg.configure_item("table_header1", label="Artist", init_width_or_weight=.75)
+            dpg.configure_item("table_header2", label="Charter", init_width_or_weight=.5)
+            dpg.configure_item("table_header3", label="Folder", init_width_or_weight=.75)                
+            dpg.configure_item("table_header4", label="Best Path", init_width_or_weight=1)
 
             with dpg.group(horizontal=True, tag="librarytablecontrols"):
                 dpg.add_button(tag="pageleftbutton", arrow=True, direction=dpg.mvDir_Left, callback=on_pageleft)

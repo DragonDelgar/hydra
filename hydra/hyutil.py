@@ -13,28 +13,78 @@ from . import hydata
 from . import hysong
 from . import hymisc
 
+
 @dataclass
 class ScanItem:
-    notespath: str
-    rootfolder: str
+    md5: str
     title: str
     artist: str
     charter: str
+    notespath: str
+    rootfolder: str
     
     def __repr__(self):
         return f"ScanItem{vars(self)}"
     
-    def from_mid_ini(f_mid, f_ini):
-        
+    def db_values(self):
+        return (self.md5, self.title, self.artist, self.charter, self.notespath, self.rootfolder)
     
-    def from_chart_ini(f_chart, f_ini):
-        
+    @staticmethod
+    def db_cols():
+        return 'md5,name,artist,charter,path,folder'
     
-    def from_sng(f_sng):
+    @staticmethod
+    def from_notes_ini_pair(f_notes, f_ini, rootfolder=None):
+        with open(f_notes, 'rb') as f:
+            md5 = hashlib.file_digest(f, "md5").hexdigest()
+        title, artist, charter = ScanItem.get_metadata_ini(f_ini)
+        return ScanItem(md5, title, artist, charter, f_notes, rootfolder)
+    
+    @staticmethod
+    def from_sng(f_sng, rootfolder=None):
+        with open(f_sng, 'rb') as f:
+            md5 = hashlib.file_digest(f, "md5").hexdigest()
+        title, artist, charter = ScanItem.get_metadata_sng(f_sng)
+        return ScanItem(md5, title, artist, charter, f_sng, rootfolder)
+
+    @staticmethod
+    def from_db(db_row):
+        return ScanItem(*db_row)
+
+    @staticmethod
+    def get_metadata_ini(f_ini):
+        config = configparser.ConfigParser(
+            strict=False, allow_no_value=True, interpolation=None
+        )
+        # utf-8 should work but try to do other encodings if it doesn't
+        for codec in ['utf-8', 'utf-8-sig', 'ansi']:
+            try:
+                config.read(f_ini, encoding=codec)
+                break
+            except (configparser.MissingSectionHeaderError, UnicodeDecodeError):
+                continue
+       
+        # Song inis have one section
+        if 'Song' in config:
+            metadata = config['Song']
+        elif 'song' in config:
+            metadata = config['song']
+        else:
+            raise hymisc.ChartFileError(f"Invalid ini format: {inifile}")
+        
+        title = metadata.get('name', "<unknown title>")
+        artist = metadata.get('artist', "<unknown artist>")
+        charter = metadata.get('charter', "<unknown charter>")
+        
+        return (title, artist, charter)
+    
+    @staticmethod
+    def get_metadata_sng(f_sng):
+        title = "<unknown title>"
+        artist = "<unknown artist>"
+        charter = "<unknown charter>"
+        
         with open(f_sng, mode='rb') as bytes:
-            
-            item = ScanItem(f_sng, None, None, None, None)
-            
             METADATACOUNT_OFFSET = 34
             bytes.seek(METADATACOUNT_OFFSET, 0)
             metadata_count = struct.unpack('Q', bytes.read(8))[0]
@@ -47,15 +97,15 @@ class ScanItem:
                 
                 match key:
                     case 'name':
-                        item.title = value
+                        title = value
                     case 'artist':
-                        item.artist = value
+                        artist = value
                     case 'charter':
-                        item.charter = value
-           
-            return item
-    
-def discover_charts_new(rootfolders, cb_progress=None):
+                        charter = value
+        
+        return (title, artist, charter)
+
+def discover_charts(rootfolders, cb_progress=None):
     """Recursively searches for charts in the given root folders.
     
     Re-encountered folders will be skipped.
@@ -70,181 +120,62 @@ def discover_charts_new(rootfolders, cb_progress=None):
     scanitems = []
     errors = []
     
-    def process_folder(folder):
-        print(f"Processing {folder}...")
-        
+    def process_folder(folder, origin_folder):
         found_mid = None
         found_chart = None
         found_ini = None
         found_sngs = []
-        fullpaths = (os.path.join(folder, f) for f in os.listdir(folder))
-        for file in (os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(f)):
-            # gather up files by type
-            if file == "notes.mid":
-                found_mid = os.path.join(folder, f)
-            elif file == "notes.chart":
-                found_chart = os.path.join(folder, f)
-            elif file == "song.ini":
-                found_ini = os.path.join(folder, f)
-            elif file.casefold().endswith(".sng"):
-                found_sngs.append(os.path.join(folder, f))
+        
+        for file, fullpath in ((f, os.path.join(folder, f)) for f in os.listdir(folder)):
+            if os.path.isfile(fullpath):
+                if file == "notes.mid":
+                    found_mid = fullpath
+                elif file == "notes.chart":
+                    found_chart = fullpath
+                elif file == "song.ini":
+                    found_ini = fullpath
+                elif file.casefold().endswith(".sng"):
+                    found_sngs.append(fullpath)
         
         if found_mid and found_ini:
             # Add .mid
-            print(f".mid found: {found_mid}/{found_ini}")
-            mid_item = ScanItem.from_mid_ini(found_mid, found_ini)
-            mid_item.rootfolder = folder
-            scanitems.append(mid_item)
+            scanitems.append(ScanItem.from_notes_ini_pair(found_mid, found_ini, rootfolder=origin_folder))
             if cb_progress:
                 cb_progress(len(scanitems))
         elif found_chart and found_ini:
             # Add .chart
-            print(f".chart found: {found_chart}/{found_ini}")
-            chart_item = ScanItem.from_chart_ini(found_chart, found_ini)
-            chart_item.rootfolder = folder
-            scanitems.append(chart_item)
+            scanitems.append(ScanItem.from_notes_ini_pair(found_chart, found_ini, rootfolder=origin_folder))
             if cb_progress:
                 cb_progress(len(scanitems))
         
         # Add .sng
         for f_sng in found_sngs:
-            print(f"SNG found: {f_sng}")
-            sng_item = ScanItem.from_sng(f_sng)
-            sng_item.rootfolder = folder
-            scanitems.append(sng_item)
+            scanitems.append(ScanItem.from_sng(f_sng, rootfolder=folder))
             if cb_progress:
                 cb_progress(len(scanitems))
     
-    # DFS
+    # DFS with no repeats
     unexplored = [(root, root) for root in rootfolders if os.path.isdir(root)]
     visited = set(rootfolders)
     
     while unexplored:
         dir, origin = unexplored.pop()
         
-        #try:
-        process_folder(dir)
-            
-        subpaths = [os.path.join(dir, f) for f in os.listdir(dir)]
-        for subpath in (os.path.join(dir, f) for f in os.listdir(dir)):
-            if os.path.isdir(subpath) and subpath not in visited:
-                visited.add(subpath)
-                unexplored.append((subpath, origin))
-            
-        # except Exception as e:
-            # errors.append(e)
-            # continue
+        try:
+            process_folder(dir, os.path.relpath(pathlib.Path(dir).parent, origin))
+                
+            subpaths = [os.path.join(dir, f) for f in os.listdir(dir)]
+            for subpath in (os.path.join(dir, f) for f in os.listdir(dir)):
+                if os.path.isdir(subpath) and subpath not in visited:
+                    visited.add(subpath)
+                    unexplored.append((subpath, origin))
+                
+        except Exception as e:
+            errors.append(e)
+            continue
     
     return (scanitems, errors)
     
-def discover_charts(rootfolders, cb_progress=None):
-    """Returns a list of tuples (chartfile, inifile, chartfolder, subfolders)
-    and a list of encountered errors.
-    
-    Recursively searches for charts in the given root folders.
-    """
-    try:
-        # (current search path, original root folder)
-        unexplored = [(root, root) for root in rootfolders]
-    except FileNotFoundError as e:
-        return ([], [e])
-    
-    # Fill out chart files found in a given folder, not necessarily in order
-    found_by_dirname = {}
-    errors = []
-    visited = set()
-    while unexplored:
-        f, origin = unexplored.pop()
-        
-        if os.path.isfile(f):
-            dir, base = os.path.split(f)
-            
-            if base in ["notes.mid", "notes.chart"]:
-                i = 0
-            elif base == "song.ini":
-                i = 1
-            else:
-                continue
-                
-            if dir not in found_by_dirname:
-                found_by_dirname[dir] = [
-                    None, None,
-                    dir, os.path.relpath(pathlib.Path(dir).parent, origin)
-                ]
-            found_by_dirname[dir][i] = f
-        
-            if cb_progress:
-                cb_progress(len(found_by_dirname))
-        else:
-            # Handle a folder - add subfolders to the search
-            try:
-                subnames = os.listdir(f)
-            except Exception as e:
-                errors.append(e)
-                continue
-                
-            for subname in subnames:
-                subpath = os.sep.join([f, subname])
-                if subpath not in visited:
-                    visited.add(subpath)
-                    unexplored.append((subpath, origin))
-    
-    return (
-        [tuple(info) for info in found_by_dirname.values() if all(info)],
-        errors
-    )
-
-
-def get_folder_chart(folder):
-    """Non-recursive lookup for a chart file in the given folder."""
-    for f in os.listdir(folder):
-        filepath = os.path.join(folder, f)
-        if os.path.isfile(filepath):
-            if f in ["notes.mid", "notes.chart"]:
-                return filepath
-    return None
-
-def get_rowvalues(chartfile, inifile, path, subfolders):
-    config = configparser.ConfigParser(
-        strict=False, allow_no_value=True, interpolation=None
-    )
-    # utf-8 should work but try to do other encodings if it doesn't
-    for codec in ['utf-8', 'utf-8-sig', 'ansi']:
-        try:
-            config.read(inifile, encoding=codec)
-            break
-        except (configparser.MissingSectionHeaderError, UnicodeDecodeError):
-            continue
-   
-    # Song inis have one section
-    if 'Song' in config:
-        metadata = config['Song']
-    elif 'song' in config:
-        metadata = config['song']
-    else:
-        raise hymisc.ChartFileError(f"Invalid ini format: {inifile}")
-    
-    # Hash the chart file
-    with open(chartfile, 'rb') as f:
-        hyhash = hashlib.file_digest(f, "md5").hexdigest()
-    
-    # Grab our desired metadata
-    try:
-        name = metadata['name']
-    except KeyError:
-        name = "<unknown name>"
-        
-    try:
-        artist = metadata['artist']
-    except KeyError:
-        artist = "<unknown artist>"
-        
-    try:
-        charter = metadata['charter']
-    except KeyError:
-        charter = "<unknown charter>"
-
-    return (hyhash, name, artist, charter, path, subfolders)
 
 def analyze_chart_file(
     filepath,

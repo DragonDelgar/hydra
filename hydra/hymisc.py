@@ -38,17 +38,6 @@ ICOPATH_PENCIL = ROOTPATH / "resource" / "icon_pencil_32.png"
 ICOPATH_HASH = ROOTPATH / "resource" / "icon_hash_32.png"
 
 
-"""Associated info: db column name, db index, and display name."""
-TABLE_COL_INFO = {
-    'hyhash': (0, "Hydra Hash"),
-    'name': (1, "Title"),
-    'artist': (2, "Artist"),
-    'charter': (3, "Charter"),
-    'path': (4, "File Path"),
-    'folder': (5, "Folder"),
-}
-
-
 class ChartFileError(Exception):
     """Just a custom error for a chart file that doesn't work."""
     pass
