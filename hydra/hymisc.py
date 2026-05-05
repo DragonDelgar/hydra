@@ -14,6 +14,9 @@ will not be supported and the app will just ask the user to re-analyze them.
 """
 HYDRA_VERSION = (1,2,0)
 
+"""Current Clone Hero version, just to display so the user can confirm."""
+ENGINE_LABEL = "Clone Hero v1.1.0.6085"
+
 
 """Feature flags"""
 FLAG_SKIPPED_DYNAMICS = False

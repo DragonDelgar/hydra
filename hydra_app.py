@@ -321,6 +321,11 @@ def on_viewport_resize():
         width=dpg.get_viewport_width() - 22 - 80,
         height=dpg.get_viewport_height() - 22 - 80
     )
+    
+    # New UI framework soon...?
+    dpg.configure_item(
+        "enginelabel", pos=(dpg.get_viewport_width() - 260, dpg.get_viewport_height() - 74)
+    )
 
 def set_scanmodal_height(long=False):
     h = appstate.scanmodal_height_long if long else appstate.scanmodal_height_short
@@ -950,6 +955,7 @@ def build_main_ui():
             dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese)
         dpg.add_font(hymisc.FONTPATH_MONO, 18, tag="MonoFont")
         
+    # Default font
     dpg.bind_font("MainFont")
     
     # Theme
@@ -1061,6 +1067,7 @@ def build_main_ui():
                 dpg.add_button(tag="pageleftbutton", arrow=True, direction=dpg.mvDir_Left, callback=on_pageleft)
                 dpg.add_text("0/0", tag= "librarypagelabel")
                 dpg.add_button(tag="pagerightbutton", arrow=True, direction=dpg.mvDir_Right, callback=on_pageright)
+                dpg.add_text(f"Game version: {hymisc.ENGINE_LABEL}", tag="enginelabel", pos=(-100,-100))
         
         dpg.add_text("No songs scanned. Set a folder and scan songs to get started!", tag="libraryempty", show=False)
         
