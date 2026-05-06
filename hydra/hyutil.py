@@ -70,7 +70,7 @@ class ScanItem:
         elif 'song' in config:
             metadata = config['song']
         else:
-            raise hymisc.ChartFileError(f"Invalid ini format: {inifile}")
+            raise hymisc.ChartFileError(f"Invalid ini format: {f_ini}")
         
         title = metadata.get('name', "<unknown title>")
         artist = metadata.get('artist', "<unknown artist>")
