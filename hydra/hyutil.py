@@ -168,7 +168,7 @@ def discover_charts(rootfolders, cb_progress=None):
         
         for f_sng in found_sngs:
             # Add .sng
-            scanitems.append(ScanItem.from_sng(f_sng, rootfolder=folder))
+            scanitems.append(ScanItem.from_sng(f_sng, rootfolder=origin_folder))
     
     # DFS with no repeats
     unexplored = [(root, root) for root in rootfolders if os.path.isdir(root)]
