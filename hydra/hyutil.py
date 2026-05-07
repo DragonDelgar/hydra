@@ -105,6 +105,28 @@ class ScanItem:
         
         return (title, artist, charter)
 
+def get_folder_count(rootfolders, cb_progress=None):
+    """Same folder search as discover_charts, but only counts the folders.
+    
+    Allows the slower part of the scan to know how far along it is.
+    """
+    # DFS with no repeats
+    unexplored = [(root, root) for root in rootfolders if os.path.isdir(root)]
+    visited = set(rootfolders)
+    
+    while unexplored:
+        dir, origin = unexplored.pop()
+        
+        subpaths = [os.path.join(dir, f) for f in os.listdir(dir)]
+        for subpath in (os.path.join(dir, f) for f in os.listdir(dir)):
+            if os.path.isdir(subpath) and subpath not in visited:
+                visited.add(subpath)
+                unexplored.append((subpath, origin))
+                if cb_progress:
+                    cb_progress(len(visited))
+    
+    return len(visited)
+    
 def discover_charts(rootfolders, cb_progress=None):
     """Recursively searches for charts in the given root folders.
     
@@ -140,19 +162,13 @@ def discover_charts(rootfolders, cb_progress=None):
         if found_mid and found_ini:
             # Add .mid
             scanitems.append(ScanItem.from_notes_ini_pair(found_mid, found_ini, rootfolder=origin_folder))
-            if cb_progress:
-                cb_progress(len(scanitems))
         elif found_chart and found_ini:
             # Add .chart
-            scanitems.append(ScanItem.from_notes_ini_pair(found_chart, found_ini, rootfolder=origin_folder))
-            if cb_progress:
-                cb_progress(len(scanitems))
+            scanitems.append(ScanItem.from_notes_ini_pair(found_chart, found_ini, rootfolder=origin_folder))        
         
-        # Add .sng
         for f_sng in found_sngs:
+            # Add .sng
             scanitems.append(ScanItem.from_sng(f_sng, rootfolder=folder))
-            if cb_progress:
-                cb_progress(len(scanitems))
     
     # DFS with no repeats
     unexplored = [(root, root) for root in rootfolders if os.path.isdir(root)]
@@ -168,6 +184,8 @@ def discover_charts(rootfolders, cb_progress=None):
             for subpath in (os.path.join(dir, f) for f in os.listdir(dir)):
                 if os.path.isdir(subpath) and subpath not in visited:
                     visited.add(subpath)
+                    if cb_progress:
+                        cb_progress(len(visited))
                     unexplored.append((subpath, origin))
                 
         except Exception as e:

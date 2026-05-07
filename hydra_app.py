@@ -27,13 +27,15 @@ def scan_library():
     """
     errors = []
     
+    folder_count = hyutil.get_folder_count(appstate.usettings.chartfolders, on_scan_findprogress)
+    on_scan_findcomplete(folder_count)
+    
     # Map out the file locations first
     scanitems, folder_errors = hyutil.discover_charts(
         appstate.usettings.chartfolders,
-        on_scan_findprogress
+        on_scan_addprogress
     )
     errors += folder_errors
-    on_scan_findcomplete(len(scanitems))
     
     cxn = sqlite3.connect(hymisc.DBPATH)
     cur = cxn.cursor()
@@ -51,7 +53,6 @@ def scan_library():
             )
         except Exception as e:
             errors.append(str(e))
-        on_scan_db_progress(i+1, len(scanitems))
         
     cxn.commit()
     cxn.close()
@@ -289,6 +290,7 @@ class HyAppState:
     
         self.scanmodal_height_short = 190
         self.scanmodal_height_long = 320
+        self.scan_foldercount = None
         
         self.input = {'C': False}
     
@@ -391,7 +393,7 @@ def on_scan():
     set_scanmodal_height(long=False)
     count, errors = scan_library()
     set_scanmodal_height(long=len(errors) > 0)
-    dpg.configure_item("scanprogress_bar", overlay=f"{count}/{count}")
+    dpg.configure_item("scanprogress_bar", overlay=f"{appstate.scan_foldercount}/{appstate.scan_foldercount}")
     dpg.show_item("scanprogress_done")
     if errors:
         dpg.show_item("scanprogress_failedsongslabel")
@@ -643,18 +645,19 @@ def on_scan_findprogress(count):
     
 def on_scan_findcomplete(count):
     """When charts have been fully discovered during a scan."""
-    dpg.set_value("scanprogress_discovering", f"Discovering charts...")
-    dpg.set_value("scanprogress_chartsfound", f"{count} charts found.")
+    dpg.set_value("scanprogress_discovering", f"Discovering folders...")
+    dpg.set_value("scanprogress_chartsfound", f"{count} folders found.")
     dpg.show_item("scanprogress_chartsfound")
     dpg.show_item("scanprogress_bartext")
     dpg.show_item("scanprogress_bar")
     dpg.set_value("scanprogress_bar", 0.0)
     dpg.configure_item("scanprogress_bar", overlay=f"0/{count}")
+    appstate.scan_foldercount = count
 
-def on_scan_db_progress(count, totalcount):
+def on_scan_addprogress(count):
     """As charts are added to library during a scan."""
-    dpg.set_value("scanprogress_bar", count/totalcount)
-    dpg.configure_item("scanprogress_bar", overlay=f"{count}/{totalcount}")
+    dpg.set_value("scanprogress_bar", count/appstate.scan_foldercount)
+    dpg.configure_item("scanprogress_bar", overlay=f"{count}/{appstate.scan_foldercount}")
 
     
 """UI view controls"""
@@ -1080,7 +1083,7 @@ def build_main_ui():
         with dpg.group(indent=16):
             dpg.add_text("Discovering charts...", tag="scanprogress_discovering")
             dpg.add_text("0 charts found.", tag="scanprogress_chartsfound", show=False)
-            dpg.add_text("Adding to library...", tag="scanprogress_bartext", show=False)
+            dpg.add_text("Adding charts to library...", tag="scanprogress_bartext", show=False)
             dpg.add_progress_bar(tag="scanprogress_bar", show=False, width=-18)
             dpg.add_text("Done!", tag="scanprogress_done", show=False)
             dpg.add_text("Skipped failed songs:", tag="scanprogress_failedsongslabel", show=False)
