@@ -223,19 +223,11 @@ class ScoreGraph:
         
         act_edge.frontend = hydata.FrontendSqueeze(frontend_chord, frontend_points)
         
-        # Set E
-        fillend = act_edge.dest.timecode
-        fillstart = hymisc.Timecode(fillend.ticks - fill_length_ticks, song.tick_resolution, song.tpm_changes, song.bpm_changes)
+        # E threshold is 4 beats before the fill marker.
+        tc_E = hymisc.Timecode(act_edge.dest.timecode.ticks - fill_length_ticks - 4*song.tick_resolution, song.tick_resolution, song.tpm_changes, song.bpm_changes)
+        act_edge.activation_fill_deadline_ms = tc_E.ms
         
-        padding = fill_length_ticks + song.tick_resolution/16
-        fillstart_padded = hymisc.Timecode(fillend.ticks - padding, song.tick_resolution, song.tpm_changes, song.bpm_changes)
-        
-        fill_length_ms = fillend.ms - fillstart.ms
-        raw_preroll_ms = fillend.ms - fillstart_padded.ms
-        preroll_ms = max(250, min(raw_preroll_ms, 10000))        
-        act_edge.activation_fill_deadline_ms = fillend.ms - fill_length_ms - preroll_ms
-        
-        act_edge.activation_initial_end_times = {sp: fillend.plusmeasure(2 * sp, song) for sp in [2, 3, 4]}
+        act_edge.activation_initial_end_times = {sp: act_edge.dest.timecode.plusmeasure(2 * sp, song) for sp in [2, 3, 4]}
         
         act_edge.skipped_dynamic_points = skipped_dynamic_reduction
         
