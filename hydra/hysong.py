@@ -237,6 +237,7 @@ class MidiParser:
         self._msg_buffer = None
         self._flag_solo = None
         self._flag_cymbals = None
+        self._flag_flam = None
         self._flag_disco = None
         self._fill_start_tick = None
         self._fill_end_tick = None
@@ -302,6 +303,10 @@ class MidiParser:
                 return ('pre', self.op_tom, hydata.NoteColor.YELLOW, hydata.NoteCymbalType.NORMAL)
             case mido.Message(note=110) if is_noteoff:
                 return ('pre', self.op_tom, hydata.NoteColor.YELLOW, hydata.NoteCymbalType.CYMBAL)
+            case mido.Message(note=109) if is_noteon:
+                return ('pre', self.op_flam, True)
+            case mido.Message(note=109) if is_noteoff:
+                return ('pre', self.op_flam, False)
             case mido.Message(note=103) if is_noteon:
                 return ('pre', self.op_solo, True)
             case mido.Message(note=103) if is_noteoff:
@@ -395,6 +400,9 @@ class MidiParser:
     def op_tom(self, color, cymbal):
         self._flag_cymbals[color] = cymbal
     
+    def op_flam(self, flam_enabled):
+        self._flag_flam = flam_enabled
+    
     def op_solo(self, is_on):
         self._flag_solo = is_on
     
@@ -461,16 +469,18 @@ class MidiParser:
         
         # Add the timestamp to the song
         if self._chord.count():
+            if self._flag_flam:
+                self._chord.apply_flam_conversion()
+            if self.mode_pro and self._flag_disco:
+                self._chord.apply_disco_flip()
             timestamp = SongTimestamp()
             timestamp.chord = self._chord
             timestamp.timecode = hymisc.Timecode(tick, self.song.tick_resolution, self.song.tpm_changes, self.song.bpm_changes)
             timestamp.flag_solo = self._flag_solo
-            if self._flag_disco:
-                timestamp.chord.apply_disco_flip()
             
             self.song.add_timestamp(timestamp)
             self._chord = None
-            
+        
         # Parsed actions that apply after the timestamp
         for phase in ['post', 'post-delayed']:
             for op_phase, op, *op_args in ops:
@@ -479,7 +489,7 @@ class MidiParser:
                             op(*op_args)
                         except hymisc.ChartFileError:
                             pass
-            
+        
         self._msg_buffer = []
     
     def parsefile(self, filename, m_difficulty, m_pro, m_bass2x):
@@ -869,16 +879,16 @@ class ChartParser:
     
         # Add the timestamp to the song
         if self._chord.count():
+            if self.mode_pro and self._flag_disco:
+                self._chord.apply_disco_flip()
             timestamp = SongTimestamp()
             timestamp.chord = self._chord
             timestamp.timecode = hymisc.Timecode(tick, self.song.tick_resolution, self.song.tpm_changes, self.song.bpm_changes)
             timestamp.flag_solo = self._flag_solo
-            if self._flag_disco:
-                timestamp.chord.apply_disco_flip()
-                
+            
             self.song.add_timestamp(timestamp)
             self._chord = None
-            
+        
         # Parsed actions that apply after the timestamp
         for phase in ['post', 'post-delayed']:
             for op_phase, op, *op_args in ops:

@@ -1,5 +1,6 @@
 import json
 import re
+import copy
 from enum import Enum
 from abc import ABC, abstractmethod
 
@@ -579,12 +580,12 @@ class MultSqueeze:
         pairs = []
         for chosen_edge in edge_options:
             edge = Chord()
-            edge[chosen_edge.colortype] = chosen_edge
+            edge.insert_note(chosen_edge)
             
             nonedge = Chord()
             for note in notes:
                 if note != chosen_edge:
-                    nonedge[note.colortype] = note
+                    nonedge.insert_note(note)
                 
             if self.direction == 'high':
                 pairs.append((nonedge, edge))
@@ -949,7 +950,7 @@ class Chord:
                 is2x=notefields['2x']
             )
             
-            chord[note.colortype] = note
+            chord.insert_note(note)
         
         return chord
         
@@ -981,6 +982,9 @@ class Chord:
     def count(self):
         return len(self.notes())
     
+    def hands_count(self):
+        return self.count() if self[NoteColor.KICK] is None else self.count() - 1
+    
     def ghost_count(self):
         return len([n for n in self.notes() if n.is_ghost()])
     
@@ -997,7 +1001,7 @@ class Chord:
         return krybg + "]"
     
     def apply_disco_flip(self):
-        """Utility to edit notes based on a disco flip flag."""
+        """Modify notes based on a disco flip flag."""
         red = self[NoteColor.RED]
         yellow = self[NoteColor.YELLOW]
         
@@ -1014,12 +1018,32 @@ class Chord:
         self[NoteColor.RED] = yellow
         self[NoteColor.YELLOW] = red
     
+    def apply_flam_conversion(self):
+        """Modify notes based on a flam marker."""
+        if self.hands_count() == 1:
+            note = self.activation_note()
+            flam_note = copy.deepcopy(note)
+            match note.colortype:
+                case NoteColor.RED:
+                    flam_note.colortype = NoteColor.YELLOW
+                case NoteColor.YELLOW:
+                    flam_note.colortype = NoteColor.BLUE
+                case NoteColor.BLUE:
+                    flam_note.colortype = NoteColor.GREEN
+                case NoteColor.GREEN:
+                    flam_note.colortype = NoteColor.BLUE
+            
+            self.insert_note(flam_note)
+    
     def add_note(self, color):
         if self[color] is not None:
             raise hymisc.ChartFileError("Duplicate note.")
         note = ChordNote(color)
         self[color] = note
         return note
+    
+    def insert_note(self, note):
+        self[note.colortype] = note
     
     def add_2x(self):
         self.add_note(NoteColor.KICK)
