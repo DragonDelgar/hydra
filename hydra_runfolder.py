@@ -26,31 +26,36 @@ if __name__ == "__main__":
     print(f"\nFound {len(charts)} charts in '{charts_root}'.\n")
     
     records_count = 0
-    for chartfile, inifile, dirname, _subfolder in charts:
-        print(f"{chartfile}")
+    for scanitem in charts:
+    # for chartfile, inifile, dirname, _subfolder in charts:
+        #print(f"{scanitem.notespath}")
         
-        hyhash, name, artist, charter, path, folder = hyutil.get_rowvalues(
-            chartfile, inifile, dirname, charts_root
-        )
+        # hyhash, name, artist, charter, path, folder = hyutil.get_rowvalues(
+            # chartfile, inifile, dirname, charts_root
+        # )
         
-        if hyhash not in book:
-            book[hyhash] = {
-                'ref_name': name,
-                'ref_artist': artist,
-                'ref_charter': charter,
+        if scanitem.md5 not in book:
+            book[scanitem.md5] = {
+                'ref_name': scanitem.title,
+                'ref_artist': scanitem.artist,
+                'ref_charter': scanitem.charter,
                 
                 'records': {},
             }
         
-        record = hyutil.analyze_chart_file(
-            chartfile, 
-            'Expert', True, True,
-            'scores', 0,
-        )
-        book[hyhash]['records']['Expert Pro Drums, 2x Bass'] = record
-        records_count += 1
+        try:
+            record = hyutil.analyze_chart_file(
+                scanitem.notespath, 
+                'Expert', True, True,
+                'scores', 0,
+            )
+        except Exception:
+            continue
         
+        book[scanitem.md5]['records']['Expert Pro Drums, 2x Bass'] = record
+        records_count += 1
+    
     with open(outfile, mode='w', encoding='utf-8') as output_json:
         json.dump(book, output_json, default=hydata.json_save, separators=(',', ':'))
-        
+    
     print(f"\nFinished saving {records_count} records to {outfile_name}")
