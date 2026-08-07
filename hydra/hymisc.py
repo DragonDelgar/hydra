@@ -12,7 +12,7 @@ For sanity reasons, records with a version that doesn't match completely
 will not be supported and the app will just ask the user to re-analyze them.
 
 """
-HYDRA_VERSION = (1,3,0)
+HYDRA_VERSION = (1,3,1)
 
 """Current Clone Hero version, just to display so the user can confirm."""
 ENGINE_LABEL = "Clone Hero v1.1.0.6142"
