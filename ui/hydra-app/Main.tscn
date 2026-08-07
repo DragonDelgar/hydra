@@ -1,0 +1,85 @@
+[gd_scene format=3 uid="uid://70e766bvofm5"]
+
+[ext_resource type="Script" uid="uid://bqpreglxoju7h" path="res://hydra_client.gd" id="1_glv2v"]
+[ext_resource type="Script" uid="uid://deu5olu0tdudb" path="res://main.gd" id="1_trn2v"]
+[ext_resource type="Texture2D" uid="uid://csark6fjuuwxk" path="res://darkbg.png" id="2_uu6xs"]
+[ext_resource type="PackedScene" uid="uid://cgw74cqtaqe2o" path="res://HLabelDivider.tscn" id="3_r0du0"]
+[ext_resource type="StyleBox" uid="uid://dq7fdxwb0qgmp" path="res://StyleBox_CyanNormal.tres" id="4_fos0i"]
+[ext_resource type="Texture2D" uid="uid://b7dx0yca8mr1h" path="res://folderburger.png" id="5_3dxm6"]
+[ext_resource type="StyleBox" uid="uid://d7mbpyn62xrw" path="res://StyleBox_CyanPressed.tres" id="5_lgr22"]
+[ext_resource type="StyleBox" uid="uid://c6aj26pymkvyq" path="res://StyleBox_CyanHover.tres" id="7_lgr22"]
+[ext_resource type="Texture2D" uid="uid://ckaf4jadxmoua" path="res://scanicon.png" id="9_03owx"]
+[ext_resource type="PackedScene" uid="uid://bla07xhkwhsfd" path="res://song_folders_modal.tscn" id="10_wkp8b"]
+
+[node name="HydraMainUI" type="CanvasLayer" unique_id=1468971504]
+script = ExtResource("1_trn2v")
+
+[node name="HydraClient" type="Node" parent="." unique_id=1425236973]
+script = ExtResource("1_glv2v")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1765639313]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_uu6xs")
+stretch_mode = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=852110851]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Spacing" type="Control" parent="VBoxContainer" unique_id=203196099]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+
+[node name="HLabelDivider2" parent="VBoxContainer" unique_id=1019004036 instance=ExtResource("3_r0du0")]
+layout_mode = 2
+label = "Library"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=475977602]
+layout_mode = 2
+
+[node name="Control" type="Control" parent="VBoxContainer/HBoxContainer" unique_id=593924913]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2
+
+[node name="Button_SongFolders" type="Button" parent="VBoxContainer/HBoxContainer" unique_id=1933414715]
+layout_mode = 2
+theme_override_constants/icon_max_width = 20
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = ExtResource("4_fos0i")
+theme_override_styles/pressed = ExtResource("5_lgr22")
+theme_override_styles/hover = ExtResource("7_lgr22")
+text = "Song Folders..."
+icon = ExtResource("5_3dxm6")
+
+[node name="Button_ScanSongs" type="Button" parent="VBoxContainer/HBoxContainer" unique_id=587595704]
+layout_mode = 2
+theme_override_constants/icon_max_width = 20
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = ExtResource("4_fos0i")
+theme_override_styles/pressed = ExtResource("5_lgr22")
+theme_override_styles/hover = ExtResource("7_lgr22")
+text = "Scan Songs"
+icon = ExtResource("9_03owx")
+
+[node name="ModalCover" type="ColorRect" parent="." unique_id=455060895]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.78431374)
+
+[node name="SongFoldersModal" parent="." unique_id=1748851646 instance=ExtResource("10_wkp8b")]
+visible = false
+
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/Button_SongFolders" to="." method="_on_button_song_folders_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/Button_ScanSongs" to="." method="_on_button_scan_songs_pressed"]
+[connection signal="ux_back" from="SongFoldersModal" to="." method="_on_sfm_back"]

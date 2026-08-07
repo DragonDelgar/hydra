@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://cgw74cqtaqe2o"]
+
+[ext_resource type="Script" uid="uid://di2klhsgy7ns6" path="res://h_label_divider.gd" id="1_65sy0"]
+
+[node name="HLabelDivider" type="Control" unique_id=1569426257]
+custom_minimum_size = Vector2(0, 20)
+propagate_maximum_size = true
+layout_mode = 3
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+size_flags_horizontal = 3
+script = ExtResource("1_65sy0")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1250565189]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Spacing" type="Control" parent="HBoxContainer" unique_id=439161289]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="HBoxContainer" unique_id=1922090316]
+custom_minimum_size = Vector2(25, 2)
+custom_maximum_size = Vector2(25, 2)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="Label" type="Label" parent="HBoxContainer" unique_id=423210438]
+layout_mode = 2
+offset_transform_enabled = true
+offset_transform_position = Vector2(0, -1)
+text = "Label"
+
+[node name="ColorRect2" type="ColorRect" parent="HBoxContainer" unique_id=2016282981]
+custom_minimum_size = Vector2(50, 2)
+custom_maximum_size = Vector2(-1, 2)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="Spacing2" type="Control" parent="HBoxContainer" unique_id=646204837]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2

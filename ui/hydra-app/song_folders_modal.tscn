@@ -1,0 +1,208 @@
+[gd_scene format=3 uid="uid://bla07xhkwhsfd"]
+
+[ext_resource type="Texture2D" uid="uid://csark6fjuuwxk" path="res://darkbg.png" id="1_fcsj7"]
+[ext_resource type="Script" uid="uid://bthiqlnaijsgc" path="res://song_folders_modal.gd" id="1_wb35f"]
+[ext_resource type="Texture2D" uid="uid://p2uucyednn44" path="res://plusfoldericon.png" id="3_eka64"]
+[ext_resource type="PackedScene" uid="uid://qneuqwrt0jtm" path="res://song_folder_entry.tscn" id="3_i1ui0"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_trn2v"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.1, 0.1, 0.1, 0.6)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
+corner_detail = 5
+expand_margin_left = 1.0
+expand_margin_top = 1.0
+expand_margin_right = 1.0
+expand_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blko4"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.15, 0.15, 0.15, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eka64"]
+bg_color = Color(0.15, 0.15, 0.15, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0, 0, 0, 0.7058824)
+shadow_size = 4
+shadow_offset = Vector2(0, 1)
+
+[node name="SongFoldersModal" type="Control" unique_id=1748851646]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 100.0
+offset_top = 50.0
+offset_right = -100.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_wb35f")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=943532573]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_trn2v")
+
+[node name="sfm_bg" type="TextureRect" parent="PanelContainer" unique_id=1257588614]
+layout_mode = 2
+texture = ExtResource("1_fcsj7")
+stretch_mode = 6
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1281175533]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=1789238830]
+layout_mode = 2
+
+[node name="sfm_BackButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1042779284]
+custom_minimum_size = Vector2(100, 0)
+custom_maximum_size = Vector2(100, -1)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_styles/normal = SubResource("StyleBoxFlat_blko4")
+text = "< Back"
+alignment = 0
+
+[node name="spacer3" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1176837337]
+custom_minimum_size = Vector2(0, 10)
+custom_maximum_size = Vector2(-1, 10)
+layout_mode = 2
+
+[node name="Title" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1098391517]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 24
+text = "Add / Remove Song Folders"
+
+[node name="Description" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1584040074]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 16
+text = "Each folder will be scanned for song files, including nested folders.
+Usually, these will be the same song folders that were set in Clone Hero."
+
+[node name="spacer" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1145147559]
+custom_minimum_size = Vector2(0, 10)
+custom_maximum_size = Vector2(-1, 10)
+layout_mode = 2
+
+[node name="AddSongFolderButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1883291183]
+custom_minimum_size = Vector2(0, 40)
+custom_maximum_size = Vector2(-1, 40)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_eka64")
+
+[node name="AddSongFolderGroup" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/AddSongFolderButton" unique_id=1016429087]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="spacer2" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer/AddSongFolderButton/AddSongFolderGroup" unique_id=1831958553]
+custom_minimum_size = Vector2(6, 0)
+custom_maximum_size = Vector2(6, -1)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/AddSongFolderButton/AddSongFolderGroup" unique_id=398340135]
+custom_minimum_size = Vector2(40, 40)
+custom_maximum_size = Vector2(40, 40)
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="TextureRect" type="TextureRect" parent="PanelContainer/MarginContainer/VBoxContainer/AddSongFolderButton/AddSongFolderGroup/MarginContainer" unique_id=15108953]
+layout_mode = 2
+texture = ExtResource("3_eka64")
+
+[node name="spacer" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer/AddSongFolderButton/AddSongFolderGroup" unique_id=282081934]
+custom_minimum_size = Vector2(5, 0)
+custom_maximum_size = Vector2(5, -1)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/AddSongFolderButton/AddSongFolderGroup" unique_id=1794422868]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Add song folder..."
+text_overrun_behavior = 5
+
+[node name="spacer2" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=281358182]
+custom_minimum_size = Vector2(0, 10)
+custom_maximum_size = Vector2(-1, 10)
+layout_mode = 2
+
+[node name="FolderListBg" type="ColorRect" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1432914523]
+layout_mode = 2
+size_flags_vertical = 3
+color = Color(1, 1, 1, 0.039215688)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/MarginContainer/VBoxContainer/FolderListBg" unique_id=88898253]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/FolderListBg/ScrollContainer" unique_id=192946315]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="EntryContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/FolderListBg/ScrollContainer/MarginContainer" unique_id=2123298281]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SongFolderEntry" parent="PanelContainer/MarginContainer/VBoxContainer/FolderListBg/ScrollContainer/MarginContainer/EntryContainer" unique_id=120153689 instance=ExtResource("3_i1ui0")]
+layout_mode = 2
+
+[node name="FileDialog" type="FileDialog" parent="." unique_id=2134677817]
+title = "Add Song Folder"
+mode_overrides_title = false
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/sfm_BackButton" to="." method="_on_sfm_back_button_pressed"]
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/AddSongFolderButton" to="." method="_on_add_song_folder_button_pressed"]
+[connection signal="dir_selected" from="FileDialog" to="." method="_on_file_dialog_dir_selected"]

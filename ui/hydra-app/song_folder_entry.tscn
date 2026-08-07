@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://qneuqwrt0jtm"]
+
+[ext_resource type="Script" uid="uid://dykjvqs8hy3bn" path="res://song_folder_entry.gd" id="1_dnfy8"]
+[ext_resource type="Texture2D" uid="uid://uo7uygsdcswi" path="res://minusicon.png" id="1_ul63q"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i1ui0"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.15, 0.043500006, 0.043500006, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="SongFolderEntry" type="HBoxContainer" unique_id=1016429087]
+offset_right = 54.0
+offset_bottom = 40.0
+script = ExtResource("1_dnfy8")
+
+[node name="RemoveButton" type="Button" parent="." unique_id=204167695]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_i1ui0")
+icon = ExtResource("1_ul63q")
+
+[node name="spacer" type="Control" parent="." unique_id=1771388604]
+custom_minimum_size = Vector2(5, 0)
+custom_maximum_size = Vector2(5, -1)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="." unique_id=1794422868]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "root/subfolder/subfolder/folderasdasdasdasdasdasasddddddddddddddddddddddddgbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+text_overrun_behavior = 5
+
+[connection signal="pressed" from="RemoveButton" to="." method="_on_remove_button_pressed"]
