@@ -386,29 +386,30 @@ class GraphPather:
         
         # to do: paths should complete at the same time, might improve performance
         while any([not p.is_complete() for p in paths]):
-            new_paths = []
+            self._iteration_paths = []
             for p in paths:
                 assert(not p.is_complete())
                 p.advance()
                     
                 if p.is_complete():
-                    new_paths.append(p)
+                    self._iteration_paths.append(p)
                     continue
                 
                 if p.is_active_sp():
                     can_extend, branchpath = p.branch_deactivate()
                     if can_extend:
-                        new_paths.append(p)
+                        self._iteration_paths.append(p)
                 else:
                     branchpath = p.branch_activate()
-                    new_paths.append(p)
+                    self._iteration_paths.append(p)
                     
                 if branchpath:
-                    new_paths.append(branchpath)
+                    self._iteration_paths.append(branchpath)
                 
             # Update the path list with branching results
-            paths = self.reduced_paths(new_paths, depth_mode, depth_value, ms_filter)
-        
+            self._reduce_iteration_paths(depth_mode, depth_value, ms_filter)
+            paths = self._iteration_paths
+            
             length += 1
             if cb_pathsprogress:
                 tc = paths[0].currentnode.timecode if paths[0].currentnode else None
@@ -423,140 +424,98 @@ class GraphPather:
             path.data.prepare_variants()
             self.record._paths.append(path.data)    
     
-    def reduced_paths(self, paths, depth_mode, depth_value, ms_filter):
-        """Reduce the number of paths along the way by eliminating paths
-        that are definitely not as good as another path.
+    def _reduce_iteration_paths(self, depth_mode, depth_value, ms_filter):
+        """Eliminates paths that are guaranteed to not make it into the final
+        result because the score is too low (depth settings) or the timing
+        difficulty is too high (ms filter).
         
-        While partway through the song, sometimes paths aren't comparable
-        because their SP situations are different, but a lot of the time they
-        *are* comparable.
+        Also creates variants for paths that have identical scores.
         
-        Depth parameters allow extra paths to be held, to end up with the
-        optimal path(s) plus some extra runner-up paths.
-        
-        depth_mode:
-            'points': Keep paths within {depth_value} points of optimal.
-            'scores': Keep paths for {depth_value} scores below optimal.
-        
-        ms_filter: Remove paths that have timing requirements more difficult
-        than this millisecond value.
+        For a song in progress, two paths are only compared if they're in
+        identical SP situations.
         """
-        # Since all the paths are at the same point in the song, the only
-        # thing that can make 2 paths not comparable is SP: SP represents
-        # an unknown amount of points that has yet to be realized. If a path
-        # has less points but more SP, it's unclear if the path is better or
-        # worse at this time.
-        # 
-        # At the end of the song, all paths of course become comparable
-        # by their final scores.
-        #
-        # Both Active SP: Only comparable if same sp value.
-        # Both Inactive SP: Score and SP value comparisons must not contradict.
-        # Different SP Active: Not comparable
-
         filtered_paths = set()
         paths_to_remove = set()
         
+        # Before path comparisons, check each path against the ms filter.
+        # Filtered paths cannot be used to eliminate paths, and are eliminated
+        # immediately if worse than a single path.
         if ms_filter is not None:
-            for p in paths:
+            for p in self._iteration_paths:
                 if not p.data.passes_ms_filter(ms_filter):
                     filtered_paths.add(p)
         
-        # Separate active SP and inactive SP paths
-        # Reduces amount of obviously ineffective comparisons in a sec
-        pathgroups = {
-            True: [],
-            False: []
-        }
-        for p in paths:
+        cmp_groups = {}
+        optimal_score = None
+        for p in self._iteration_paths:
             # Don't consider paths that recently SqIn/SqOuted as they have
             # interacted with an SP phrase earlier than other paths.
-            if p.buffered_sqinout_sp == 0 and p not in paths_to_remove:
-                pathgroups[p.is_active_sp()].append(p)                
-        
-        worsethan_scores = {p: set() for p in paths}
-        
-        for p, q in combinations(pathgroups[True], 2):
-            # Active SP paths: Compare score only if SP is the same
-            if p.sp_end_time != q.sp_end_time:
-                continue
-               
-            score_diff = q.data.totalscore() - p.data.totalscore()
-            if score_diff < 0:
-                better, worse = (p, q)
-            elif score_diff > 0:
-                better, worse = (q, p)
-            else:
-                continue
+            if p.is_complete() and (optimal_score is None or p.data.totalscore() > optimal_score):
+                optimal_score = p.data.totalscore()
+            
+            if p.buffered_sqinout_sp == 0:
+                if p.is_complete():
+                    sp_value = 0
+                else:
+                    sp_value = p.sp_end_time if p.is_active_sp() else p.sp
                 
-            if worse in filtered_paths:
-                paths_to_remove.add(worse)
-                continue
+                cmp_group = (p.is_active_sp(), sp_value)
+                if cmp_group not in cmp_groups:
+                    cmp_groups[cmp_group] = []
+                cmp_groups[cmp_group].append(p)
+        
+        
+        for cmp_paths in cmp_groups.values():
+            worsethan_scores = {p: set() for p in cmp_paths}
+            marked_variants = set()
+            for p, q in combinations(cmp_paths, 2):
+                # Both paths are already removed, skip
+                if p in paths_to_remove and q in paths_to_remove:
+                    continue
                 
-            if depth_mode == 'points':
-                if better not in filtered_paths and worse.data.totalscore() + depth_value < better.data.totalscore():
+                # One of the paths became a variant just now, skip
+                if p in marked_variants or q in marked_variants:
+                    continue
+                
+                score_diff = q.data.totalscore() - p.data.totalscore()
+                if score_diff < 0:
+                    better, worse = (p, q)
+                elif score_diff > 0:
+                    better, worse = (q, p)
+                else:
+                    # Avoid mixing filtered and unfiltered paths here
+                    if (p in filtered_paths) == (q in filtered_paths):
+                        # Variants - p will continue analysis and q will become a variant
+                        p.data.variants.append(q.data)
+                        q.data.var_point = len(p.data)
+                        marked_variants.add(q)
+                        paths_to_remove.add(q)              
+                    continue
+                
+                # Better path is filtered, can't help eliminate anything unless it's optimal.
+                if better in filtered_paths and not (better.data.totalscore() == optimal_score):
+                    continue
+                
+                # Filtered paths are removed as soon as they're worse than anything
+                if worse in filtered_paths:
                     paths_to_remove.add(worse)
-            elif depth_mode == 'scores':
-                if better not in filtered_paths:
+                    continue
+                
+                # If better is already out of depth range, this is
+                # a shortcut to identifying that worse is also out.
+                if better in paths_to_remove:
+                    paths_to_remove.add(worse)
+                    continue
+                
+                # Done with shortcuts, now check against depth settings.
+                if depth_mode == 'points' and worse.data.totalscore() + depth_value < better.data.totalscore():
+                    paths_to_remove.add(worse)
+                elif depth_mode == 'scores':
                     worsethan_scores[worse].add(better.data.totalscore())
                     if len(worsethan_scores[worse]) > depth_value:
                         paths_to_remove.add(worse)
-            
-        marked_variants = set()
-        for p, q in combinations(pathgroups[False], 2):
-            # Inactive SP paths: Compare both SP meter and score.
-            # A path must be either better in both or better in one and 
-            # tied in the other
-            if p in marked_variants or q in marked_variants:
-                continue
-            
-            cmp = 0
-            p_sp = 0 if p.is_complete() else p.sp
-            q_sp = 0 if q.is_complete() else q.sp
-            
-            sp_diff = q_sp - p_sp
-            if sp_diff > 0:
-                cmp += 1
-            elif sp_diff < 0:
-                cmp -= 1
-            
-            score_diff = q.data.totalscore() - p.data.totalscore()
-            if score_diff > 0:
-                cmp += 1
-            elif score_diff < 0:
-                cmp -= 1
-            
-            if sp_diff == score_diff == 0:
-                # The two paths have converged at this point and any further
-                # pathing will affect them identically
-                if (p in filtered_paths) == (q in filtered_paths):
-                    # Variants - p will continue analysis and q will become a variant
-                    p.data.variants.append(q.data)
-                    q.data.var_point = len(p.data)
-                    marked_variants.add(q)
-                    paths_to_remove.add(q)                
-            
-            if cmp < 0:
-                better, worse = (p, q)
-            elif cmp > 0:
-                better, worse = (q, p)
-            else:
-                continue
-                
-            if worse in filtered_paths:
-                paths_to_remove.add(worse)
-                continue
-                
-            if depth_mode == 'points':
-                if better not in filtered_paths and worse.data.totalscore() + depth_value < better.data.totalscore():
-                    paths_to_remove.add(worse)   
-            elif depth_mode == 'scores':
-                if better not in filtered_paths:
-                    worsethan_scores[worse].add(better.data.totalscore())
-                    if len(worsethan_scores[worse]) > depth_value:
-                        paths_to_remove.add(worse)
-            
-        return [p for p in paths if p not in paths_to_remove]
+        
+        self._iteration_paths = [p for p in self._iteration_paths if p not in paths_to_remove]
         
 class GraphPath:
     """Quick early note:
