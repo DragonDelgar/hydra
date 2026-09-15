@@ -725,6 +725,9 @@ class BackendSqueeze:
                 
         return True
     
+    def __repr__(self):
+        return f"{self.chord.rowstr()} {self.offset_ms}"
+    
     def summarystr(self):
         if self.is_sp:
             if self.offset_ms < -70:

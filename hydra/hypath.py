@@ -111,8 +111,14 @@ class ScoreGraph:
             # handle deacts
             if timestamp.timecode in self._pending_deacts:
                 self.handle_deact(timestamp.timecode, timestamp.chord)
-            
+        
+        # Ensure we've scored up to the last note
         self.advance_tracks(song.last.timecode, song.last.chord)
+        
+        # Handle any deacts that are past the end of the song (these are not always here)
+        for pending_deact in sorted(list(self._pending_deacts)):
+            self.set_head_time(pending_deact)
+            self.handle_deact(pending_deact, None)
     
     def store_notecount(self, count):
         self._proto_base_edge.notecount += count
@@ -336,7 +342,7 @@ class ScoreGraphEdge:
         self.sqin_time = None
     
     def __repr__(self):
-        return f" --> {self.dest.name()}, frontend = {self.frontend}"
+        return f" --> {self.dest.name() if self.dest else "None"}, frontend = {self.frontend}"
         
     def deactivation_type(self, sp_end_time):
         """Which kind of deactivation is possible if this deact edge is reached
