@@ -38,6 +38,7 @@ class ScoreGraph:
         self.song = song
         self.start = ScoreGraphNode(song.start_time(), False)
         self.length = 0
+        self.songfeatures = song.features
         
         # Processing state
         self._head_time = None
@@ -386,6 +387,7 @@ class GraphPather:
         
     def read(self, graph, depth_mode, depth_value, ms_filter, cb_pathsprogress=None):
         self.record.ms_limit = ms_filter
+        self.record.songfeatures = graph.songfeatures
         paths = [GraphPath()]
         paths[0].currentnode = graph.start
         length = 0

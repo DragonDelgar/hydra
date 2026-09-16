@@ -461,6 +461,17 @@ def on_path_selected(sender, app_data, path):
     dpg.bind_item_font(dpg.last_item(), "MainFont")
     dpg.add_spacer(height=2, parent="songdetails_pathdetails")
     
+    if 'Accent kicks' in appstate.get_selected_record().songfeatures:
+        dpg.add_text(f"Accent kicks: {appstate.get_selected_record().songfeatures['Accent kicks']}", indent=6, parent="songdetails_pathdetails")
+        dpg.bind_item_font(dpg.last_item(), "MonoFont")
+        dpg.bind_item_theme(dpg.last_item(), "warning_theme")
+    
+    if 'Ghost kicks' in appstate.get_selected_record().songfeatures:
+        dpg.add_text(f"Ghost kicks: {appstate.get_selected_record().songfeatures['Ghost kicks']}", indent=6, parent="songdetails_pathdetails")
+        dpg.bind_item_font(dpg.last_item(), "MonoFont")
+        dpg.bind_item_theme(dpg.last_item(), "warning_theme")
+    
+    
     with dpg.tree_node(label="Multiplier squeezes", parent="songdetails_pathdetails", default_open=True):
         dpg.bind_item_font(dpg.last_item(), "MainFont24")
         if path.multsqueezes:

@@ -79,8 +79,8 @@ class Song:
         self.bpm_changes = {}
         
         """Stub for song-wide analysis."""
-        self.features = []
-        
+        self.features = {}
+    
     def __iter__(self):
         return SongIter(self)
     
@@ -103,7 +103,7 @@ class Song:
         Whenever an activation is placed, ignore the next 3 measures.
         """
         if all(not ts.has_activation() for ts in self._sequence):
-            self.features.append('Auto-Generated Fills')
+            self.features['Auto-Generated Fills'] = True
             
             # Each measure's closest note for becoming an activation fill
             measuremap = {}
@@ -335,8 +335,16 @@ class MidiParser:
                 return ('notes', self.op_note, hydata.NoteColor.RED, hydata.NoteDynamicType.GHOST, False)
             case mido.Message(note=97) if is_noteon:
                 return ('notes', self.op_note, hydata.NoteColor.RED, hydata.NoteDynamicType.NORMAL, False)
+            case mido.Message(note=96, velocity=127) if is_noteon:
+                return ('notes', self.op_note, hydata.NoteColor.KICK, hydata.NoteDynamicType.ACCENT, False)
+            case mido.Message(note=96, velocity=1) if is_noteon:
+                return ('notes', self.op_note, hydata.NoteColor.KICK, hydata.NoteDynamicType.GHOST, False)
             case mido.Message(note=96) if is_noteon:
                 return ('notes', self.op_note, hydata.NoteColor.KICK, hydata.NoteDynamicType.NORMAL, False)
+            case mido.Message(note=95, velocity=127) if is_noteon and self.mode_bass2x:
+                return ('notes', self.op_note, hydata.NoteColor.KICK, hydata.NoteDynamicType.ACCENT, True)
+            case mido.Message(note=95, velocity=1) if is_noteon and self.mode_bass2x:
+                return ('notes', self.op_note, hydata.NoteColor.KICK, hydata.NoteDynamicType.GHOST, True)
             case mido.Message(note=95) if is_noteon and self.mode_bass2x:
                 return ('notes', self.op_note, hydata.NoteColor.KICK, hydata.NoteDynamicType.NORMAL, True)
             case _:
@@ -479,6 +487,21 @@ class MidiParser:
             timestamp.flag_solo = self._flag_solo
             
             self.song.add_timestamp(timestamp)
+            
+            # Count kick dynamics as they're added to the song
+            if self._chord[hydata.NoteColor.KICK]:
+                match self._chord[hydata.NoteColor.KICK].dynamictype:
+                    case hydata.NoteDynamicType.ACCENT:
+                        if 'Accent kicks' not in self.song.features:
+                            self.song.features['Accent kicks'] = 1
+                        else:
+                            self.song.features['Accent kicks'] += 1
+                    case hydata.NoteDynamicType.GHOST:
+                        if 'Ghost kicks' not in self.song.features:
+                            self.song.features['Ghost kicks'] = 1
+                        else:
+                            self.song.features['Ghost kicks'] += 1
+            
             self._chord = None
         
         # Parsed actions that apply after the timestamp

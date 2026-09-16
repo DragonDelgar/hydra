@@ -16,6 +16,7 @@ def json_save(obj):
             'hyversion': obj.hyversion,
             'ms': obj.ms_limit,
             'paths': obj._paths,
+            'features': obj.songfeatures,
         }
     
     if isinstance(obj, Path):
@@ -132,6 +133,8 @@ def json_load(_dict):
         
         o.ms_limit = _dict['ms']
         o._paths = _dict['paths']
+        
+        o.songfeatures = _dict['features']
         
         for p in o._paths:
             p.prepare_variants()
