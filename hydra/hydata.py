@@ -237,6 +237,8 @@ class HydraRecord:
         
         # Path results. Contains nested paths due to the variant system.
         self._paths = []
+        
+        self.songfeatures = {}
 
     def __eq__(self, other):
         # Not sure if deep equality is what we want here, leaving it for now
