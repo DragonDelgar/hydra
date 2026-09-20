@@ -967,7 +967,10 @@ class Chord:
         return chord
         
     def code(self):
-        return hyencode.CHORD_ENCODE[hash(self)]
+        try:
+            return hyencode.CHORD_ENCODE[hash(self)]
+        except Exception as e:
+            return ""
         
     def __repr__(self):
         return self.rowstr()

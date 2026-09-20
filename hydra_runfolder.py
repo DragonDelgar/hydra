@@ -71,7 +71,7 @@ def book_from_folder(rootfolder, score_depth):
 
 def output_csv(book, filename_csv):
     print("\nOutputting csv...")
-    with open(filename_csv, 'w', newline='') as file_csv:
+    with open(filename_csv, 'w', newline='', encoding="utf-8") as file_csv:
         csvwriter = csv.writer(file_csv)
         csvwriter.writerow(["Title", "Artist", "Charter", "md5", "Index", "Score", "Path", "Avg. Mult", "Ghost kicks", "Accent kicks"])
         for md5 in book.keys():
