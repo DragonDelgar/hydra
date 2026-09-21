@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://qneuqwrt0jtm"]
 
-[ext_resource type="Script" uid="uid://dykjvqs8hy3bn" path="res://song_folder_entry.gd" id="1_dnfy8"]
-[ext_resource type="Texture2D" uid="uid://uo7uygsdcswi" path="res://minusicon.png" id="1_ul63q"]
+[ext_resource type="Script" uid="uid://dykjvqs8hy3bn" path="res://Scripts/song_folder_entry.gd" id="1_dnfy8"]
+[ext_resource type="Texture2D" uid="uid://uo7uygsdcswi" path="res://Images/minusicon.png" id="1_ul63q"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i1ui0"]
 content_margin_left = 4.0

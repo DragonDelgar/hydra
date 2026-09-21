@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b7dx0yca8mr1h"
-path="res://.godot/imported/folderburger.png-bccf77042f67c5a1dc4feb188f595c41.ctex"
+uid="uid://ckaf4jadxmoua"
+path="res://.godot/imported/scanicon.png-267c75d798dfe364a2d3a2ccd5f0804d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://folderburger.png"
-dest_files=["res://.godot/imported/folderburger.png-bccf77042f67c5a1dc4feb188f595c41.ctex"]
+source_file="res://Images/scanicon.png"
+dest_files=["res://.godot/imported/scanicon.png-267c75d798dfe364a2d3a2ccd5f0804d.ctex"]
 
 [params]
 

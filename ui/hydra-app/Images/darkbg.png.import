@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ckaf4jadxmoua"
-path="res://.godot/imported/scanicon.png-50cd88fa44aa162a3455ef49dadbd5db.ctex"
+uid="uid://csark6fjuuwxk"
+path="res://.godot/imported/darkbg.png-07201387eaa199eaad6e16b5391430b4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://scanicon.png"
-dest_files=["res://.godot/imported/scanicon.png-50cd88fa44aa162a3455ef49dadbd5db.ctex"]
+source_file="res://Images/darkbg.png"
+dest_files=["res://.godot/imported/darkbg.png-07201387eaa199eaad6e16b5391430b4.ctex"]
 
 [params]
 

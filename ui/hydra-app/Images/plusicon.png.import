@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://p2uucyednn44"
-path="res://.godot/imported/plusfoldericon.png-53f1bffda17da2a4051f99ff1b63541a.ctex"
+uid="uid://dv1fhdmsvme21"
+path="res://.godot/imported/plusicon.png-8baef6a8092b5fa0aad866fe46cb730f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://plusfoldericon.png"
-dest_files=["res://.godot/imported/plusfoldericon.png-53f1bffda17da2a4051f99ff1b63541a.ctex"]
+source_file="res://Images/plusicon.png"
+dest_files=["res://.godot/imported/plusicon.png-8baef6a8092b5fa0aad866fe46cb730f.ctex"]
 
 [params]
 

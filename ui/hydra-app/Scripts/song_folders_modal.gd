@@ -1,24 +1,27 @@
 extends Control
 
-signal ux_back
-
 @onready var entry_container = $PanelContainer/MarginContainer/VBoxContainer/FolderListBg/ScrollContainer/MarginContainer/EntryContainer
 @onready var file_dialog = $FileDialog
 
-const SCN_ENTRY: PackedScene = preload("res://song_folder_entry.tscn")
-
+const SCN_ENTRY: PackedScene = preload("res://Scenes/song_folder_entry.tscn")
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	StateManager.on_state.connect(_handle_state)
+	_handle_state(&"Null", StateManager._state)
 	SettingsManager.updated_song_folders.connect(_on_settings_song_folders_changed)
 	refresh()
+
+func _handle_state(oldstate, state):
+	match state:
+		&"SongFolders":
+			self.show()
+		_:
+			self.hide()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	pass
-
-func _on_sfm_back_button_pressed():
-	ux_back.emit()
 
 func _on_settings_song_folders_changed():
 	refresh()

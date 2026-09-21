@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://v0rxqawlgghy"]
+
+[ext_resource type="PackedScene" uid="uid://b60i55smpbw30" path="res://Scenes/back_button.tscn" id="1_3hh75"]
+[ext_resource type="Script" uid="uid://54qjlivwmebb" path="res://Scripts/scan_issues_modal.gd" id="1_ckkat"]
+
+[node name="ScanIssuesModal" type="Control" unique_id=1632566361]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -325.0
+offset_top = -225.0
+offset_right = 325.0
+offset_bottom = 225.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ckkat")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=219522333]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="PanelContainer" unique_id=1807043840]
+layout_mode = 2
+color = Color(0.25, 0.25, 0.25, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1987342679]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=573282252]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=67590412]
+layout_mode = 2
+
+[node name="sfm_BackButton" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=194367313 instance=ExtResource("1_3hh75")]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=385549468]
+layout_mode = 2
+text = "Scan Issues (34)"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1644474579]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/ScrollContainer" unique_id=882956118]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="EntryContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer" unique_id=2136644053]
+layout_mode = 2
+size_flags_horizontal = 3

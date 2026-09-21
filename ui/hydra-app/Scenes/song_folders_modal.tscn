@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://bla07xhkwhsfd"]
 
-[ext_resource type="Texture2D" uid="uid://csark6fjuuwxk" path="res://darkbg.png" id="1_fcsj7"]
-[ext_resource type="Script" uid="uid://bthiqlnaijsgc" path="res://song_folders_modal.gd" id="1_wb35f"]
-[ext_resource type="Texture2D" uid="uid://p2uucyednn44" path="res://plusfoldericon.png" id="3_eka64"]
-[ext_resource type="PackedScene" uid="uid://qneuqwrt0jtm" path="res://song_folder_entry.tscn" id="3_i1ui0"]
+[ext_resource type="Texture2D" uid="uid://csark6fjuuwxk" path="res://Images/darkbg.png" id="1_fcsj7"]
+[ext_resource type="Script" uid="uid://bthiqlnaijsgc" path="res://Scripts/song_folders_modal.gd" id="1_wb35f"]
+[ext_resource type="PackedScene" uid="uid://b60i55smpbw30" path="res://Scenes/back_button.tscn" id="3_blko4"]
+[ext_resource type="Texture2D" uid="uid://p2uucyednn44" path="res://Images/plusfoldericon.png" id="3_eka64"]
+[ext_resource type="PackedScene" uid="uid://qneuqwrt0jtm" path="res://Scenes/song_folder_entry.tscn" id="3_i1ui0"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_trn2v"]
 content_margin_left = 0.0
@@ -25,18 +26,6 @@ expand_margin_left = 1.0
 expand_margin_top = 1.0
 expand_margin_right = 1.0
 expand_margin_bottom = 1.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blko4"]
-content_margin_left = 4.0
-content_margin_top = 4.0
-content_margin_right = 4.0
-content_margin_bottom = 4.0
-bg_color = Color(0.15, 0.15, 0.15, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-corner_detail = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eka64"]
 bg_color = Color(0.15, 0.15, 0.15, 1)
@@ -84,14 +73,8 @@ theme_override_constants/margin_bottom = 40
 [node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=1789238830]
 layout_mode = 2
 
-[node name="sfm_BackButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1042779284]
-custom_minimum_size = Vector2(100, 0)
-custom_maximum_size = Vector2(100, -1)
+[node name="BackButton" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=194367313 instance=ExtResource("3_blko4")]
 layout_mode = 2
-size_flags_horizontal = 0
-theme_override_styles/normal = SubResource("StyleBoxFlat_blko4")
-text = "< Back"
-alignment = 0
 
 [node name="spacer3" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1176837337]
 custom_minimum_size = Vector2(0, 10)
@@ -203,6 +186,5 @@ file_mode = 2
 access = 2
 use_native_dialog = true
 
-[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/sfm_BackButton" to="." method="_on_sfm_back_button_pressed"]
 [connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/AddSongFolderButton" to="." method="_on_add_song_folder_button_pressed"]
 [connection signal="dir_selected" from="FileDialog" to="." method="_on_file_dialog_dir_selected"]

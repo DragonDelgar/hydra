@@ -13,11 +13,14 @@ config_version=5
 config/name="HydraApp"
 run/main_scene="uid://70e766bvofm5"
 config/features=PackedStringArray("4.7", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="res://Images/icon.svg"
 
 [autoload]
 
 SettingsManager="*uid://c562nb35jnx7f"
+StateManager="*uid://dc0su3d6qqgh3"
+RemoteManager="*uid://bqpreglxoju7h"
+DataSignalManager="*uid://pcfqiwl4bsvn"
 
 [display]
 

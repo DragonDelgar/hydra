@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://csark6fjuuwxk"
-path="res://.godot/imported/darkbg.png-5054f4e0217c18178cb03e0366e95015.ctex"
+uid="uid://b7dx0yca8mr1h"
+path="res://.godot/imported/folderburger.png-b171404b6d7ed478ced1da536d688ee8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://darkbg.png"
-dest_files=["res://.godot/imported/darkbg.png-5054f4e0217c18178cb03e0366e95015.ctex"]
+source_file="res://Images/folderburger.png"
+dest_files=["res://.godot/imported/folderburger.png-b171404b6d7ed478ced1da536d688ee8.ctex"]
 
 [params]
 

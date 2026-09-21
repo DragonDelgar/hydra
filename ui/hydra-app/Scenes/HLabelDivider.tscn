@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cgw74cqtaqe2o"]
 
-[ext_resource type="Script" uid="uid://di2klhsgy7ns6" path="res://h_label_divider.gd" id="1_65sy0"]
+[ext_resource type="Script" uid="uid://di2klhsgy7ns6" path="res://Scripts/h_label_divider.gd" id="1_65sy0"]
 
 [node name="HLabelDivider" type="Control" unique_id=1569426257]
 custom_minimum_size = Vector2(0, 20)

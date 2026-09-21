@@ -6,6 +6,7 @@ import pathlib
 import hashlib
 import time
 import struct
+import random
 from dataclasses import dataclass
 
 from . import hypath
@@ -105,11 +106,121 @@ class ScanItem:
         
         return (title, artist, charter)
 
+def scan_discover_step(rootfolders, cb_progress=None):
+    """
+        UI Update Scan. Returns a list of discovered charts, only the filepaths.
+        These are essentially prepped calls to ScanItem.from_notes_ini_pair
+        or ScanItem.from_sng.
+        
+        Valid discovered charts:
+        * notes.mid and song.ini in the same folder
+        * notes.chart and song.ini in the same folder
+        * Any .sng
+        
+        If all three of notes.mid, notes.chart, and notes.ini are present
+        in the same folder, notes.chart is ignored.
+        
+        Any number of .sng files in the same folder can be added.
+        
+        Calls cb_progress with the current number discovered.
+    """
+    chart_calls = []
+    errors = []
+    
+    # DFS with no repeats
+    unexplored = [(root, root) for root in rootfolders if os.path.isdir(root)]
+    visited = set(rootfolders)
+    
+    while unexplored:
+        dir, origin = unexplored.pop()
+        found_mid = None
+        found_chart = None
+        found_ini = None
+        found_sngs = []
+        
+        found_subfolders = []
+        
+        if random.random() < 0.1:
+            raise Exception("Simulated step1 unexpected crash.")
+        
+        try:
+            if random.random() < 0.1:
+                raise Exception("Simulated handled folder error.")
+            for file, filepath in ((f, os.path.join(dir, f)) for f in os.listdir(dir)):
+                # Check current folder's contents
+                if os.path.isfile(filepath):
+                    if file == "notes.mid":
+                        found_mid = filepath
+                    elif file == "notes.chart":
+                        found_chart = filepath
+                    elif file == "song.ini":
+                        found_ini = filepath
+                    elif file.casefold().endswith(".sng"):
+                        found_sngs.append(filepath)
+                else:
+                    if os.path.isdir(filepath) and filepath not in visited:
+                        visited.add(filepath)
+                        unexplored.append((filepath, origin))
+            
+            origin_folder = os.path.relpath(pathlib.Path(dir).parent, origin)
+            if found_mid and found_ini:
+                # Add .mid
+                chart_calls.append((ScanItem.from_notes_ini_pair, (found_mid, found_ini, origin_folder)))
+            elif found_chart and found_ini:
+                # Add .chart
+                chart_calls.append((ScanItem.from_notes_ini_pair, (found_chart, found_ini, origin_folder)))        
+            
+            for f_sng in found_sngs:
+                # Add .sng
+                chart_calls.append((ScanItem.from_sng, (f_sng, origin_folder)))
+        except Exception as e:
+            errors.append(repr(e))
+            continue
+    
+        cb_progress(len(chart_calls))
+        
+    return (chart_calls, errors)
+
+def scan_db_step(chart_calls, cb_progress=None):
+    """NOTE: Might combine with the prior step since there is no need for
+    separate usage of them."""
+    errors = []
+    cxn = sqlite3.connect(hymisc.DBPATH)
+    cur = cxn.cursor()
+    
+    # Initialize db
+    cur.execute("DROP TABLE IF EXISTS charts")
+    cur.execute(f"CREATE TABLE charts({ScanItem.db_cols()})")
+    
+    success_count = 0
+    progress_count = 0
+    for c, cargs in chart_calls:
+        if random.random() < 0.1:
+            raise Exception("Simulated step2 unexpected crash.")
+        try:
+            if random.random() < 0.1:
+                raise Exception("Simulated handled db error.")
+            scanitem = c(*cargs)
+            cur.execute(
+                f"INSERT INTO charts VALUES (?, ?, ?, ?, ?, ?)",
+                scanitem.db_values()
+            )
+            success_count += 1
+        except Exception as e:
+            errors.append(repr(e))
+        progress_count += 1
+        cb_progress(progress_count)
+        
+    cxn.commit()
+    cxn.close()
+    return success_count, errors
+
 def get_folder_count(rootfolders, cb_progress=None):
     """Same folder search as discover_charts, but only counts the folders.
     
     Allows the slower part of the scan to know how far along it is.
     """
+    raise Exception("Deprecated")
     # DFS with no repeats
     unexplored = [(root, root) for root in rootfolders if os.path.isdir(root)]
     visited = set(rootfolders)
@@ -139,6 +250,7 @@ def discover_charts(rootfolders, cb_progress=None):
     - Add all .sng files.
     
     """
+    raise Exception("Deprecated")
     scanitems = []
     errors = []
     

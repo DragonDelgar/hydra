@@ -1,0 +1,88 @@
+[gd_scene format=3 uid="uid://cfmqds74phdld"]
+
+[ext_resource type="Script" uid="uid://dwwqb1n01pt6q" path="res://Scripts/song_scan_progress_modal.gd" id="1_j6idd"]
+
+[node name="SongScanProgressModal" type="Control" unique_id=1632566361]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_j6idd")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=219522333]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="PanelContainer" unique_id=1807043840]
+layout_mode = 2
+color = Color(0.25, 0.25, 0.25, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1987342679]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=573282252]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=385549468]
+visible = false
+layout_mode = 2
+text = "Scanning..."
+
+[node name="DiscoveredLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=805592734]
+layout_mode = 2
+text = "Discovered 0 songs..."
+
+[node name="AddingSongsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=394709326]
+layout_mode = 2
+text = "Adding songs..."
+
+[node name="ProgressBar" type="ProgressBar" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1218619847]
+custom_minimum_size = Vector2(0, 40)
+custom_maximum_size = Vector2(-1, 40)
+layout_mode = 2
+step = 1.0
+value = 21.0
+show_percentage = false
+
+[node name="ProgressBarLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/ProgressBar" unique_id=419085272]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -31.0
+offset_top = -11.5
+offset_right = 31.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "10/1234"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Control" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1785384378]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+
+[node name="DismissButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=796329914]
+layout_mode = 2
+text = "Back/OK/Cancel/Etc."
+
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/DismissButton" to="." method="_on_dismiss_button_pressed"]
