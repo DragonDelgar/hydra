@@ -951,7 +951,11 @@ class Chord:
     
     @staticmethod
     def from_code(code):
-        notes_raw = hyencode.CHORD_DECODE[code]
+        try:
+            notes_raw = hyencode.CHORD_DECODE[code]
+        except Exception as e:
+            print(f"\nWARNING: An error occurred during chord decoding for {code}. Error: {e}")
+            return Chord()
         
         chord = Chord()
         for notefields in notes_raw:
@@ -970,6 +974,7 @@ class Chord:
         try:
             return hyencode.CHORD_ENCODE[hash(self)]
         except Exception as e:
+            print(f"\nWARNING: An error occurred during chord encoding for {self}. Error: {e}")
             return ""
         
     def __repr__(self):
