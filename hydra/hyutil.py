@@ -200,6 +200,7 @@ def analyze_chart_file(
     m_difficulty, m_pro, m_bass2x,
     d_mode, d_value,
     ms_filter=None,
+    upperbound=None,
     cb_parsecomplete=None, cb_pathsprogress=None,
     export_tempomap=False
 ):
@@ -222,7 +223,7 @@ def analyze_chart_file(
     if cb_parsecomplete:
         cb_parsecomplete()
         
-    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
+    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, upperbound, cb_pathsprogress, export_tempomap)
 
 
 def analyze_chart_bytes_mid(
@@ -230,6 +231,7 @@ def analyze_chart_bytes_mid(
     m_difficulty, m_pro, m_bass2x,
     d_mode, d_value,
     ms_filter=None,
+    upperbound=None,
     cb_parsecomplete=None, cb_pathsprogress=None,
     export_tempomap=False
 ):
@@ -244,13 +246,14 @@ def analyze_chart_bytes_mid(
     if cb_parsecomplete:
         cb_parsecomplete()
     
-    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
+    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, upperbound, cb_pathsprogress, export_tempomap)
 
 def analyze_chart_bytes_chart(
     chartbytes,
     m_difficulty, m_pro, m_bass2x,
     d_mode, d_value,
     ms_filter=None,
+    upperbound=None,
     cb_parsecomplete=None, cb_pathsprogress=None,
     export_tempomap=False
 ):
@@ -265,13 +268,14 @@ def analyze_chart_bytes_chart(
     if cb_parsecomplete:
         cb_parsecomplete()
     
-    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, cb_pathsprogress, export_tempomap)
+    return _analyze(song, m_difficulty, m_pro, m_bass2x, d_mode, d_value, ms_filter, upperbound, cb_pathsprogress, export_tempomap)
     
 def _analyze(
     song,
     m_difficulty, m_pro, m_bass2x,
     d_mode, d_value,
     ms_filter=None,
+    upperbound=None,
     cb_pathsprogress=None,
     export_tempomap=False
 ):
@@ -282,7 +286,7 @@ def _analyze(
     
     """
     # Use song object to make a score graph
-    graph = hypath.ScoreGraph(song)
+    graph = hypath.ScoreGraph(song, upperbound)
     
     # Use score graph to run the paths
     pather = hypath.GraphPather()

@@ -117,6 +117,10 @@ class HyAppUserSettings:
     depth_mode = HyAppUserSetting()
     mslimit_enabled = HyAppUserSetting(astype='bool')
     mslimit_value = HyAppUserSetting()
+    show_scorediffs = HyAppUserSetting(astype='bool')
+    show_ldo = HyAppUserSetting(astype='bool') # Least double offsets
+    custom_upperlimit_enabled = HyAppUserSetting(astype='bool')
+    custom_upperlimit_value = HyAppUserSetting()
     
     def __init__(self):
         # Load setting values from config
@@ -146,7 +150,11 @@ class HyAppUserSettings:
             ('depth_value', '4'),
             ('depth_mode', 'scores'),
             ('mslimit_enabled', 'True'),
-            ('mslimit_value', '10')
+            ('mslimit_value', '10'),
+            ('show_scorediffs', 'False'),
+            ('show_ldo', 'False'),
+            ('custom_upperlimit_enabled', 'False'),
+            ('custom_upperlimit_value', '140')
         ]:
             if key not in loadedsettings:
                 loadedsettings[key] = default
@@ -379,6 +387,13 @@ def on_mslimit_check(sender, app_data, user_data):
 def on_mslimit_value(sender, app_data, user_data):
     appstate.usettings.mslimit_value = app_data
 
+def on_custom_upperlimit_check(sender, app_data, user_data):
+    appstate.usettings.custom_upperlimit_enabled = app_data
+    refresh_custom_upperlimit_check()
+
+def on_custom_upperlimit_value(sender, app_data, user_data):
+    appstate.usettings.custom_upperlimit_value = app_data
+
 def refresh_mslimit_check():
     dpg.configure_item("inp_mslimit", enabled=appstate.usettings.mslimit_enabled)
     dpg.bind_item_theme("mslimit_mstext", "default_theme" if appstate.usettings.mslimit_enabled else "disabled_text")
@@ -386,6 +401,14 @@ def refresh_mslimit_check():
 def init_mslimit_state():
     dpg.set_value("mslimit_check", appstate.usettings.mslimit_enabled)
     dpg.set_value("inp_mslimit", int(appstate.usettings.mslimit_value))
+
+def refresh_custom_upperlimit_check():
+    dpg.configure_item("inp_custom_upperlimit", enabled=appstate.usettings.custom_upperlimit_enabled)
+    dpg.bind_item_theme("text_custom_upperlimit", "default_theme" if appstate.usettings.custom_upperlimit_enabled else "disabled_text")
+
+def init_custom_upperlimit_state():
+    dpg.set_value("custom_upperlimit_check", appstate.usettings.custom_upperlimit_enabled)
+    dpg.set_value("inp_custom_upperlimit", int(appstate.usettings.custom_upperlimit_value))
     
 def on_scan():
     reset_scan_modal()
@@ -612,6 +635,7 @@ def on_run_chart(sender, app_data, user_data):
             appstate.usettings.view_difficulty, appstate.usettings.view_prodrums, appstate.usettings.view_bass2x,
             appstate.usettings.depth_mode, int(appstate.usettings.depth_value),
             int(appstate.usettings.mslimit_value) if appstate.usettings.mslimit_enabled else None,
+            int(appstate.usettings.custom_upperlimit_value) if appstate.usettings.custom_upperlimit_enabled else None,
             on_analyze_parsecomplete, on_analyze_pathsprogress,
             export_tempomap=True
         )
@@ -697,6 +721,8 @@ def view_main():
     refresh_depthmode()
     init_mslimit_state()
     refresh_mslimit_check()
+    init_custom_upperlimit_state()
+    refresh_custom_upperlimit_check()
     
     
 def view_showsongdetails():
@@ -1136,6 +1162,11 @@ def build_main_ui():
                     dpg.add_checkbox(tag="mslimit_check", indent=100, callback=on_mslimit_check)
                     dpg.add_input_int(tag="inp_mslimit", indent=140, min_value=-200, min_clamped=True, max_value=200, max_clamped=True, width=100, default_value=0, callback=on_mslimit_value)
                     dpg.add_text("ms", tag="mslimit_mstext")
+                with dpg.group(horizontal=True):
+                    dpg.add_text(" Upper bound:")
+                    dpg.add_checkbox(tag="custom_upperlimit_check", indent=100, callback=on_custom_upperlimit_check)
+                    dpg.add_input_int(tag="inp_custom_upperlimit", indent=140, min_value=140, min_clamped=True, width=100, default_value=140, callback=on_custom_upperlimit_value)
+                    dpg.add_text("ms", tag="text_custom_upperlimit")
                 dpg.add_spacer(height=0)
                 dpg.add_button(tag="runbutton", label="Analyze paths!", width=-1,height=-1, callback=on_run_chart)
                 dpg.bind_item_font(dpg.last_item(), "MainFont24")

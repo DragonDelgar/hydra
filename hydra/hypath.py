@@ -33,9 +33,10 @@ class ScoreGraph:
     order to explore valid paths through the song.
     
     """
-    def __init__(self, song):
+    def __init__(self, song, upperbound=None):
         # Finished state
         self.song = song
+        self.upperbound = upperbound if upperbound else 140
         self.start = ScoreGraphNode(song.start_time(), False)
         self.length = 0
         self.songfeatures = song.features
@@ -85,7 +86,7 @@ class ScoreGraph:
             
             if timestamp.flag_sp:
                 # If any deacts are only the squeeze window away (140ms), keep a non-extended copy of them (SqOut)
-                sqout_deacts = set([tc for tc in self._pending_deacts if tc.ms - timestamp.timecode.ms < 140])
+                sqout_deacts = set([tc for tc in self._pending_deacts if tc.ms - timestamp.timecode.ms < self.upperbound])
                 
                 # Deact timecodes that can be extended by this sp: current pending deacts as well as very recently handled deacts (SqIn)
                 extendable_tcs = self._pending_deacts.union(set([e.dest.timecode for e in self._recent_deact_edges]))
@@ -181,7 +182,7 @@ class ScoreGraph:
         return self._head_time.ms - timecode.ms
         
     def is_recent_to_head(self, timecode):
-        return self.head_time_offset(timecode) < 140
+        return self.head_time_offset(timecode) < self.upperbound
         
     def set_head_time(self, timecode):
         """ Update head time and any mechanics based on being 'recent'"""
