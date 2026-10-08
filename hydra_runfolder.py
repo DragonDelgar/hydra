@@ -42,6 +42,8 @@ def book_from_folder(rootfolder, score_depth):
             print(f"\t{error}")
         print("\n", end='')
     
+    miscinfo = {}
+    
     print(f"Analyzing charts...", end='')
     for scanitem in scanitems:
         if scanitem.md5 not in book:
@@ -63,11 +65,21 @@ def book_from_folder(rootfolder, score_depth):
                     
                     'records': {'Expert Pro Drums, 2x Bass': record},
                 }
+                
+                tierstr = "???"
+                for folder in reversed(scanitem.notespath.split(os.sep)[:-1]):
+                    if folder.startswith('Tier'):
+                        tierstr = folder
+                        break
+                        
+                miscinfo[scanitem.md5] = {
+                    'tier': tierstr,
+                }
             except Exception as e:
                 print(f"\nAn error occurred while trying to process {scanitem.notespath}: {e}")
     print("\nDone.")
     
-    return book
+    return book, miscinfo
 
 def output_csv(book, filename_csv):
     print("\nOutputting csv...")
@@ -90,7 +102,31 @@ def output_csv(book, filename_csv):
                     record.songfeatures['Accent kicks'] if 'Accent kicks' in record.songfeatures else 0,
                 ])
     print(f"Done. ({filename_csv})")
-    
+
+
+def output_csv_tourney(book, miscinfo, filename_csv):
+    print("\nOutputting csv...")
+    with open(filename_csv, 'w', newline='', encoding="utf-8") as file_csv:
+        csvwriter = csv.writer(file_csv)
+        csvwriter.writerow(["Tier", "Title", "Artist", "Path Label", "Score", "Mult Squeezes", "Activations"])
+        for md5 in reversed(book.keys()):
+            record = book[md5]['records']['Expert Pro Drums, 2x Bass']
+            optimal_score = record.best_path().totalscore()
+            for i,path in enumerate(record.all_paths()):
+                p_score = path.totalscore()
+                pstr = path.pathstring_verbose().split('|')
+                csvwriter.writerow([
+                    miscinfo[md5]['tier'],
+                    book[md5]['ref_name'],
+                    book[md5]['ref_artist'],
+                    "Optimal" if p_score == optimal_score else "Alternate",
+                    path.totalscore(),
+                    "None." if pstr[0].startswith('(') else pstr[0].strip(),
+                    "None." if pstr[1].startswith(' (') else pstr[1].strip(),
+                ])
+    print(f"Done. ({filename_csv})")
+
+
 if __name__ == "__main__":
     # Output files
     filename = "runfolder_output"
@@ -108,7 +144,7 @@ if __name__ == "__main__":
     except:
         score_depth = 4
         
-    book = book_from_folder(rootfolder, score_depth)
+    book, miscinfo = book_from_folder(rootfolder, score_depth)
     
     print("\nOutputting json...")
     with open(filename_json, mode='w', encoding='utf-8') as file_json:
