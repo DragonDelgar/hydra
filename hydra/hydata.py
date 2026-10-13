@@ -739,12 +739,12 @@ class BackendSqueeze:
                 return "Insane SqOut"
             elif self.offset_ms < -10:
                 return "Hard SqOut"
-            elif self.offset_ms < 10:
+            elif self.offset_ms < 3:
                 return "Standard SqOut"
             elif self.offset_ms < 70:
-                return "Easy SqOut"
+                return "Easy SqOut (uncounted)"
             else:
-                return "Free SqOut"
+                return "Free SqOut (uncounted)"
         else:
             if self.offset_ms < -70:
                 return "Free"
