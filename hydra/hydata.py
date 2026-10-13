@@ -807,7 +807,8 @@ class NoteColor(Enum):
             NoteColor.RED,
             NoteColor.YELLOW,
             NoteColor.BLUE,
-            NoteColor.GREEN
+            NoteColor.GREEN,
+            NoteColor.KICK,
         ]
     
     def __str__(self):
@@ -957,8 +958,12 @@ class Chord:
             print(f"\nWARNING: An error occurred during chord decoding for {code}. Error: {e}")
             return Chord()
         
+        return Chord._from_literal(notes_raw)
+    
+    @staticmethod
+    def _from_literal(note_list):
         chord = Chord()
-        for notefields in notes_raw:
+        for notefields in note_list:
             note = ChordNote(
                 NoteColor(notefields['color']), 
                 dynamictype=NoteDynamicType(notefields['dyn']), 
@@ -967,16 +972,21 @@ class Chord:
             )
             
             chord.insert_note(note)
-        
         return chord
-        
+    
     def code(self):
         try:
             return hyencode.CHORD_ENCODE[hash(self)]
         except Exception as e:
             print(f"\nWARNING: An error occurred during chord encoding for {self}. Error: {e}")
             return ""
-        
+    
+    def _literal(self):
+        L = []
+        for note in self.notes():
+            L.append({'color': note.colortype.value, 'cym': note.cymbaltype.value, 'dyn': note.dynamictype.value, '2x': note.is2x})
+        return L
+    
     def __repr__(self):
         return self.rowstr()
         
@@ -1092,3 +1102,81 @@ class Chord:
             if (note := self[c]) is not None:
                 return note
         raise ValueError
+    
+    @staticmethod
+    def all_chords():
+        """Generator for all unique chords. Includes dynamic kicks.
+        
+        Breakdown:
+            cymbals multiply the combinations by 2.
+            dynamics multiply the combinations by 3.
+        
+        One-handed red: [R] * dynamics = 3
+        One-handed non-red: [Y/B/G] * cymbals * dynamics = 18
+        Two-handed with red: [RY/RB/RG] * cymbals2 * dynamics1 * dynamics2 = 54
+        Two-handed without red: [YB/YG/BG] * cymbals1 * cymbals2 * dynamics1 * dynamics2 = 108
+        
+        Total hands-only chords: 183
+        Total kick-only chords: 6
+        Hands+kick combinations: 183 * 6 = 1098
+        
+        Total: 1287
+        """
+        REDS = [
+            None,
+            {'color': 2, 'cym': 1, 'dyn': 1, '2x': False},
+            {'color': 2, 'cym': 1, 'dyn': 2, '2x': False},
+            {'color': 2, 'cym': 1, 'dyn': 3, '2x': False},
+        ]
+        YELLOWS = [
+            None,
+            {'color': 3, 'cym': 1, 'dyn': 1, '2x': False},
+            {'color': 3, 'cym': 1, 'dyn': 2, '2x': False},
+            {'color': 3, 'cym': 1, 'dyn': 3, '2x': False},
+            {'color': 3, 'cym': 2, 'dyn': 1, '2x': False},
+            {'color': 3, 'cym': 2, 'dyn': 2, '2x': False},
+            {'color': 3, 'cym': 2, 'dyn': 3, '2x': False},
+        ]
+        BLUES = [
+            None,
+            {'color': 4, 'cym': 1, 'dyn': 1, '2x': False},
+            {'color': 4, 'cym': 1, 'dyn': 2, '2x': False},
+            {'color': 4, 'cym': 1, 'dyn': 3, '2x': False},
+            {'color': 4, 'cym': 2, 'dyn': 1, '2x': False},
+            {'color': 4, 'cym': 2, 'dyn': 2, '2x': False},
+            {'color': 4, 'cym': 2, 'dyn': 3, '2x': False},
+        ]
+        GREENS = [
+            None,
+            {'color': 5, 'cym': 1, 'dyn': 1, '2x': False},
+            {'color': 5, 'cym': 1, 'dyn': 2, '2x': False},
+            {'color': 5, 'cym': 1, 'dyn': 3, '2x': False},
+            {'color': 5, 'cym': 2, 'dyn': 1, '2x': False},
+            {'color': 5, 'cym': 2, 'dyn': 2, '2x': False},
+            {'color': 5, 'cym': 2, 'dyn': 3, '2x': False},
+        ]
+        KICKS = [
+            None,
+            {'color': 1, 'cym': 1, 'dyn': 1, '2x': False},
+            {'color': 1, 'cym': 1, 'dyn': 2, '2x': False},
+            {'color': 1, 'cym': 1, 'dyn': 3, '2x': False},
+            {'color': 1, 'cym': 1, 'dyn': 1, '2x': True},
+            {'color': 1, 'cym': 1, 'dyn': 2, '2x': True},
+            {'color': 1, 'cym': 1, 'dyn': 3, '2x': True},
+        ]
+        
+        # 9604 combinations.
+        for r in REDS:
+            for y in YELLOWS:
+                for b in BLUES:
+                    for g in GREENS:
+                        for k in KICKS:
+                            hands = sum(1 for n in [r,y,b,g] if n is not None)
+                            
+                            # Skip invalid combinations
+                            if hands > 2 or hands == 0 and k is None:
+                                continue
+                                
+                            yield Chord._from_literal(n for n in [r,y,b,g,k] if n is not None)
+
+
