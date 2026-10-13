@@ -121,6 +121,7 @@ class HyAppUserSettings:
     show_ldo = HyAppUserSetting(astype='bool') # Least double offsets
     custom_upperlimit_enabled = HyAppUserSetting(astype='bool')
     custom_upperlimit_value = HyAppUserSetting()
+    optimaldiff_enabled = HyAppUserSetting(astype='bool')
     
     def __init__(self):
         # Load setting values from config
@@ -154,7 +155,8 @@ class HyAppUserSettings:
             ('show_scorediffs', 'False'),
             ('show_ldo', 'False'),
             ('custom_upperlimit_enabled', 'False'),
-            ('custom_upperlimit_value', '140')
+            ('custom_upperlimit_value', '140'),
+            ('optimaldiff_enabled', 'False'),
         ]:
             if key not in loadedsettings:
                 loadedsettings[key] = default
@@ -394,10 +396,17 @@ def on_custom_upperlimit_check(sender, app_data, user_data):
 def on_custom_upperlimit_value(sender, app_data, user_data):
     appstate.usettings.custom_upperlimit_value = app_data
 
+def on_optimaldiff_check(sender, app_data, user_data):
+    appstate.usettings.optimaldiff_enabled = app_data
+    refresh_songdetails()
+
 def refresh_mslimit_check():
     dpg.configure_item("inp_mslimit", enabled=appstate.usettings.mslimit_enabled)
     dpg.bind_item_theme("mslimit_mstext", "default_theme" if appstate.usettings.mslimit_enabled else "disabled_text")
 
+def init_optimaldiff_state():
+    dpg.set_value("optimaldiff_check", appstate.usettings.optimaldiff_enabled)
+    
 def init_mslimit_state():
     dpg.set_value("mslimit_check", appstate.usettings.mslimit_enabled)
     dpg.set_value("inp_mslimit", int(appstate.usettings.mslimit_value))
@@ -720,6 +729,7 @@ def view_main():
     refresh_depthvalue()
     refresh_depthmode()
     init_mslimit_state()
+    init_optimaldiff_state()
     refresh_mslimit_check()
     init_custom_upperlimit_state()
     refresh_custom_upperlimit_check()
@@ -937,7 +947,8 @@ def refresh_songdetails():
                 ep_suffix = "" if viewed_record.ms_limit is None else f" (Limit timings: {viewed_record.ms_limit} ms)"
                 dpg.add_separator(parent="songdetails_pathpanel", label=f"More Paths{ep_suffix}")
             current_score = p.totalscore()
-            current_treenode = dpg.add_tree_node(label=f"{current_score:,}", parent="songdetails_pathpanel", default_open=True)
+            scorediff = f"    ({p.totalscore() - viewed_record.best_path().totalscore()})" if current_score_tier > 1 and appstate.usettings.optimaldiff_enabled else ""
+            current_treenode = dpg.add_tree_node(label=f"{current_score:,}{scorediff}", parent="songdetails_pathpanel", default_open=True)
             dpg.bind_item_font(current_treenode, "MonoFont")
         
         with dpg.table(parent=current_treenode, header_row=False):
@@ -1150,7 +1161,10 @@ def build_main_ui():
                         dpg.add_text("Hash", tag="songdetails_songhash", color=(180,180,180,255))
                     dpg.bind_item_font(dpg.last_item(), "MonoFont")
             with dpg.child_window(tag="songdetails_songanalysis", width=400):
-                dpg.add_text("/// Space for future stuff! ///") # Song Traits?
+                dpg.add_separator(label="List display settings")
+                with dpg.group(horizontal=True):
+                    dpg.add_text(" Show score difference from optimal:")
+                    dpg.add_checkbox(tag="optimaldiff_check", indent=228, callback=on_optimaldiff_check)
             with dpg.child_window(tag="songdetails_controls", width=-1):
                 dpg.add_separator(label="More Paths settings")
                 with dpg.group(horizontal=True):
