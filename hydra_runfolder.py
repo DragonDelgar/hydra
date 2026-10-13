@@ -28,7 +28,7 @@ def _generate_test(record, scanitem, i):
     print("            })\n")
     
 
-def book_from_folder(rootfolder, score_depth):
+def book_from_folder(rootfolder, score_depth, ms_filter):
     if not isinstance(rootfolder, list):
         rootfolder = [rootfolder]
     
@@ -53,6 +53,7 @@ def book_from_folder(rootfolder, score_depth):
                     scanitem.notespath, 
                     'Expert', True, True,
                     'scores', score_depth,
+                    ms_filter,
                     export_tempomap=True,
                 )
             
@@ -143,8 +144,13 @@ if __name__ == "__main__":
         score_depth = int(sys.argv[2])
     except:
         score_depth = 4
+    
+    try:
+        ms_filter = float(sys.argv[3])
+    except:
+        ms_filter = None
         
-    book, miscinfo = book_from_folder(rootfolder, score_depth)
+    book, miscinfo = book_from_folder(rootfolder, score_depth, ms_filter)
     
     print("\nOutputting json...")
     with open(filename_json, mode='w', encoding='utf-8') as file_json:
