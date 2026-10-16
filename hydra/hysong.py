@@ -145,6 +145,32 @@ class Song:
     def start_time(self):
         return hymisc.Timecode(0, self.tick_resolution, self.tpm_changes, self.bpm_changes)
 
+    def tpm_bpm_at(self, tick):
+        left_bpm = None
+        left_tpm = None
+        right_bpm = None
+        right_tpm = None
+        
+        for k, v in self.tpm_changes.items():
+            if k < tick:
+                left_tpm = v
+                right_tpm = v
+            elif k == tick:
+                right_tpm = v
+            else:
+                break
+        
+        for k, v in self.bpm_changes.items():
+            if k < tick:
+                left_bpm = v
+                right_bpm = v
+            elif k == tick:
+                right_bpm = v
+            else:
+                break
+        
+        return left_tpm, left_bpm, right_tpm, right_bpm
+
 
 """
 

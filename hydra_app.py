@@ -117,8 +117,7 @@ class HyAppUserSettings:
     depth_mode = HyAppUserSetting()
     mslimit_enabled = HyAppUserSetting(astype='bool')
     mslimit_value = HyAppUserSetting()
-    show_scorediffs = HyAppUserSetting(astype='bool')
-    show_ldo = HyAppUserSetting(astype='bool') # Least double offsets
+    ldo_enabled = HyAppUserSetting(astype='bool') # Least double offsets
     custom_upperlimit_enabled = HyAppUserSetting(astype='bool')
     custom_upperlimit_value = HyAppUserSetting()
     optimaldiff_enabled = HyAppUserSetting(astype='bool')
@@ -152,8 +151,7 @@ class HyAppUserSettings:
             ('depth_mode', 'scores'),
             ('mslimit_enabled', 'True'),
             ('mslimit_value', '10'),
-            ('show_scorediffs', 'False'),
-            ('show_ldo', 'False'),
+            ('ldo_enabled', 'False'),
             ('custom_upperlimit_enabled', 'False'),
             ('custom_upperlimit_value', '140'),
             ('optimaldiff_enabled', 'False'),
@@ -400,12 +398,19 @@ def on_optimaldiff_check(sender, app_data, user_data):
     appstate.usettings.optimaldiff_enabled = app_data
     refresh_songdetails()
 
+def on_ldo_check(sender, app_data, user_data):
+    appstate.usettings.ldo_enabled = app_data
+    refresh_songdetails()
+
 def refresh_mslimit_check():
     dpg.configure_item("inp_mslimit", enabled=appstate.usettings.mslimit_enabled)
     dpg.bind_item_theme("mslimit_mstext", "default_theme" if appstate.usettings.mslimit_enabled else "disabled_text")
 
 def init_optimaldiff_state():
     dpg.set_value("optimaldiff_check", appstate.usettings.optimaldiff_enabled)
+
+def init_ldo_state():
+    dpg.set_value("ldo_check", appstate.usettings.ldo_enabled)
     
 def init_mslimit_state():
     dpg.set_value("mslimit_check", appstate.usettings.mslimit_enabled)
@@ -729,6 +734,7 @@ def view_main():
     refresh_depthvalue()
     refresh_depthmode()
     init_mslimit_state()
+    init_ldo_state()
     init_optimaldiff_state()
     refresh_mslimit_check()
     init_custom_upperlimit_state()
@@ -1164,9 +1170,12 @@ def build_main_ui():
                 dpg.add_separator(label="List display settings")
                 with dpg.group(horizontal=True):
                     dpg.add_text(" Show score difference from optimal:")
-                    dpg.add_checkbox(tag="optimaldiff_check", indent=228, callback=on_optimaldiff_check)
+                    dpg.add_checkbox(tag="optimaldiff_check", indent=260, callback=on_optimaldiff_check)
+                with dpg.group(horizontal=True):
+                    dpg.add_text(" Show backend timings as double offsets:")
+                    dpg.add_checkbox(tag="ldo_check", indent=260, callback=on_ldo_check)
             with dpg.child_window(tag="songdetails_controls", width=-1):
-                dpg.add_separator(label="More Paths settings")
+                dpg.add_separator(label="Pathing settings")
                 with dpg.group(horizontal=True):
                     dpg.add_text(" Score range:")
                     dpg.add_input_int(tag="inp_depthvalue", indent=100, min_value=0, min_clamped=True, width=140, default_value=1, callback=on_depth_value)

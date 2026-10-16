@@ -64,6 +64,7 @@ def json_save(obj):
             
             'fe_pts': obj.frontend_points,
             'backends': obj.backends,
+            'ldos': obj.backend_ldos,
             
             'sqinouts': obj.sqinouts,
             
@@ -179,6 +180,7 @@ def json_load(_dict):
             
             o.frontend_points = _dict['fe_pts']
             o.backends = _dict['backends']
+            o.backend_ldos = _dict['ldos']
             
             o.sqinouts = _dict['sqinouts']
             
@@ -436,6 +438,10 @@ class Activation:
         self.frontend_points = None
         self.backends = []
         
+        self._left_frontend_ldo_factor = None
+        self._right_frontend_ldo_factor = None
+        self.backend_ldos = []
+        
         self.sqinouts = []
         
         self.e_offset = None
@@ -490,6 +496,10 @@ class Activation:
         
         c.frontend_points = self.frontend_points
         c.backends = self.backends
+        
+        c._left_frontend_ldo_factor = self._left_frontend_ldo_factor
+        c._right_frontend_ldo_factor = self._right_frontend_ldo_factor
+        c.backend_ldos = self.backend_ldos
         
         c.sqinouts = [s for s in self.sqinouts]
         

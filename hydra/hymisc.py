@@ -163,7 +163,10 @@ class Timecode:
             return self.ticks == other
     
     def __lt__(self, other):
-        return self.ticks < other.ticks
+        if isinstance(other, Timecode):
+            return self.ticks < other.ticks
+        else:
+            return self.ticks < other
     
     def __hash__(self):
         return self.ticks

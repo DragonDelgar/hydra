@@ -239,6 +239,8 @@ class ScoreGraph:
         
         act_edge.skipped_dynamic_points = skipped_dynamic_reduction
         
+        act_edge.left_tpm, act_edge.left_bpm, act_edge.right_tpm, act_edge.right_bpm = self.song.tpm_bpm_at(act_edge.dest.timecode)
+    
         self._base_track_head.branch_edge = act_edge
     
     def add_deact_edge(self):
@@ -267,7 +269,9 @@ class ScoreGraph:
                 deact_edge.sqinout_timing = offset_ms
                 deact_edge.sqout_time = deact_edge.sqout_time.plusmeasure(2, self.song)
                 deact_edge.sqin_time = deact_edge.sqin_time.plusmeasure(2, self.song)
-                
+        
+        deact_edge.left_tpm, deact_edge.left_bpm, deact_edge.right_tpm, deact_edge.right_bpm = self.song.tpm_bpm_at(deact_edge.dest.timecode)
+        
         self._recent_deact_edges.append(deact_edge)
         self._sp_track_head.branch_edge = deact_edge
 
@@ -342,6 +346,11 @@ class ScoreGraphEdge:
         self.late_sqin_count = 0
         self.sqout_time = None
         self.sqin_time = None
+        
+        self.left_bpm = None
+        self.left_tpm = None
+        self.right_bpm = None
+        self.right_tpm = None
     
     def __repr__(self):
         return f" --> {self.dest.name() if self.dest else "None"}, frontend = {self.frontend}"
@@ -555,6 +564,7 @@ class GraphPath:
             self.sp_end_time = None
             self.sp_ready_time = None
             self.skipped_e_offset = None
+            
     
     # Develop along the edge that leads farther into the song.
     # Always moves a path closer to being complete, unless it's already complete.
@@ -645,6 +655,8 @@ class GraphPath:
         new_act.sp_meter = self.sp
         new_act.frontend_points = br_edge.frontend.points
         new_act.e_offset = self.skipped_e_offset if self.skipped_e_offset is not None else e_offset
+        new_act._left_frontend_ldo_factor = br_edge.left_bpm / br_edge.left_tpm
+        new_act._right_frontend_ldo_factor = br_edge.right_bpm / br_edge.right_tpm
         
         new_path.data._activations.append(new_act)
         new_path.data.score_sp += br_edge.frontend.points
@@ -683,6 +695,13 @@ class GraphPath:
         
         # Backend scoring adjustments.
         for be in self.currentnode.branch_edge.backends:
+            # Calculate ldo's
+            if be.offset_ms < 0:
+                ldo_m = new_path.data._activations[-1]._left_frontend_ldo_factor * self.currentnode.branch_edge.left_tpm / self.currentnode.branch_edge.left_bpm
+            else:
+                ldo_m = new_path.data._activations[-1]._right_frontend_ldo_factor * self.currentnode.branch_edge.right_tpm / self.currentnode.branch_edge.right_bpm
+            new_path.data._activations[-1].backend_ldos.append(be.offset_ms / (ldo_m + 1))
+            
             is_already_counted = be.offset_ms <= 0
             is_leeway = be.offset_ms > 0 and be.offset_ms < 3
             
